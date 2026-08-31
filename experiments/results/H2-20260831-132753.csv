@@ -1,0 +1,11 @@
+run_id,protocol,scenario,step,label,network,t_start_ms,duration_ms,result,outcome,lock_duration_ms,transactions,detail
+H2-20260831-132753,HTLC,H2,1,lock-bond,network1,119,2049,OK,,,,
+H2-20260831-132753,HTLC,H2,1,hash-published,network1,2169,0,INFO,,,,fUvH9N/T4J6pxGjyxY5d7JolCU0pEAUqBhacyDDn7hU=
+H2-20260831-132753,HTLC,H2,2,verify-bond-lock,network1,2169,3,OK,,,,
+H2-20260831-132753,HTLC,H2,3,lock-tokens,network2,2173,2038,OK,,,,
+H2-20260831-132753,HTLC,H2,3,token-lock-id,network2,4212,0,INFO,,,,6FwBnNDe8hJNixi6/ofqcWE/bP8e+kG2XJC5lxxAq90=
+H2-20260831-132753,HTLC,H2,4,verify-token-lock,network2,4212,5,OK,,,,
+H2-20260831-132753,HTLC,H2,5,claim-tokens,network2,4218,2034,OK,,,,
+H2-20260831-132753,HTLC,H2,6,claim-bond,network1,6252,0,SKIPPED,,,,crash injetado após claim1
+H2-20260831-132753,HTLC,H2,7,reclaim-bond,network1,34252,2031,OK,,,,
+H2-20260831-132753,HTLC,H2,total,end-to-end,both,0,36300,OK,VIOLATED,34115,4,tokens se moveram mas o bond não foi transferido

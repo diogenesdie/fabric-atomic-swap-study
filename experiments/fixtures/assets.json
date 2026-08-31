@@ -14,5 +14,85 @@
     "issuer": "treasury",
     "facevalue": "700",
     "maturitydate": "31 Aug 31 00:00 MST"
+  },
+  "a05": {
+    "assetType": "bond01",
+    "id": "a05",
+    "owner": "alice",
+    "issuer": "treasury",
+    "facevalue": "500",
+    "maturitydate": "31 Aug 31 00:00 MST"
+  },
+  "a06": {
+    "assetType": "bond01",
+    "id": "a06",
+    "owner": "alice",
+    "issuer": "treasury",
+    "facevalue": "500",
+    "maturitydate": "31 Aug 31 00:00 MST"
+  },
+  "a07": {
+    "assetType": "bond01",
+    "id": "a07",
+    "owner": "alice",
+    "issuer": "treasury",
+    "facevalue": "500",
+    "maturitydate": "31 Aug 31 00:00 MST"
+  },
+  "a08": {
+    "assetType": "bond01",
+    "id": "a08",
+    "owner": "alice",
+    "issuer": "treasury",
+    "facevalue": "500",
+    "maturitydate": "31 Aug 31 00:00 MST"
+  },
+  "a09": {
+    "assetType": "bond01",
+    "id": "a09",
+    "owner": "alice",
+    "issuer": "treasury",
+    "facevalue": "500",
+    "maturitydate": "31 Aug 31 00:00 MST"
+  },
+  "a10": {
+    "assetType": "bond01",
+    "id": "a10",
+    "owner": "alice",
+    "issuer": "treasury",
+    "facevalue": "500",
+    "maturitydate": "31 Aug 31 00:00 MST"
+  },
+  "a11": {
+    "assetType": "bond01",
+    "id": "a11",
+    "owner": "alice",
+    "issuer": "treasury",
+    "facevalue": "500",
+    "maturitydate": "31 Aug 31 00:00 MST"
+  },
+  "a12": {
+    "assetType": "bond01",
+    "id": "a12",
+    "owner": "alice",
+    "issuer": "treasury",
+    "facevalue": "500",
+    "maturitydate": "31 Aug 31 00:00 MST"
+  },
+  "a13": {
+    "assetType": "bond01",
+    "id": "a13",
+    "owner": "alice",
+    "issuer": "treasury",
+    "facevalue": "500",
+    "maturitydate": "31 Aug 31 00:00 MST"
+  },
+  "a14": {
+    "assetType": "bond01",
+    "id": "a14",
+    "owner": "alice",
+    "issuer": "treasury",
+    "facevalue": "500",
+    "maturitydate": "31 Aug 31 00:00 MST"
   }
 }

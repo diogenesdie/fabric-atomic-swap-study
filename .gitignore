@@ -3,6 +3,9 @@
 
 # Binários compilados
 /bin/
+# `go build ./apps/x` deixa o binário na raiz com o nome do pacote
+/htlc-orchestrator
+/coordinator
 *.exe
 *.test
 *.out

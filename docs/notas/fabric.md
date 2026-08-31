@@ -189,6 +189,33 @@ A go-cli despeja stack traces enormes do `fabric-sdk-go` em toda falha. Sempre
 redirecionar para arquivo e filtrar (`grep -oE 'Description: [^\\]*'`), senão o
 sinal desaparece no ruído.
 
+### 9. `DISCOVERY_AS_LOCALHOST` — a variável que ninguém documenta
+
+**Sintoma:** toda consulta falha com
+`Endorser Client Status Code: (2)` tentando alcançar
+`peer0.org1.network1.com:7051`.
+
+**Causa:** o *service discovery* do Fabric devolve os endereços **internos** dos
+peers, que não resolvem a partir do host. Vale para qualquer cliente rodando
+fora da rede Docker.
+
+**Solução:** `os.Setenv("DISCOVERY_AS_LOCALHOST", "true")` antes de
+`gateway.Connect`. O fabric-sdk-go então reescreve os endereços descobertos para
+`localhost`. É o que a go-cli faz em `FabricHelper()`, sem nenhum comentário
+explicando. Está em `apps/htlc-orchestrator/fabric.go`.
+
+### 10. Reset de estado é caro — use um ativo por execução
+
+Derrubar e recriar as duas redes leva ~3 minutos, inviável para uma matriz com
+N ≥ 10 repetições por cenário. A saída: `experiments/fixtures/assets.json`
+declara **doze bonds** (`a03`–`a14`), onze deles de alice. Cada execução recebe
+um ativo virgem via `-bond-id`, e o reset completo só é necessário quando os
+saldos de token precisam voltar ao início.
+
+Os saldos de token, esses, acumulam entre execuções — o que não atrapalha,
+porque a classificação do desfecho compara o estado **antes e depois** de cada
+execução, não valores absolutos.
+
 ## Latência: dominada pelo corte de bloco
 
 Medição do spike (baseline sem falha, `1-node`, arm64, Docker 7,7 GB):

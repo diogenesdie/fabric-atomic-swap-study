@@ -1,0 +1,6 @@
+run_id,protocol,scenario,step,label,network,t_start_ms,duration_ms,result,outcome,lock_duration_ms,transactions,detail
+H1-20260831-132705,HTLC,H1,1,lock-bond,network1,99,2047,OK,,,,
+H1-20260831-132705,HTLC,H1,1,hash-published,network1,2146,0,INFO,,,,ea9MqvamhGTjHWOnwwlAx/X39pB7A2dE4FT/wG6IZaA=
+H1-20260831-132705,HTLC,H1,3,lock-tokens,network2,2146,0,SKIPPED,,,,crash injetado após lock1
+H1-20260831-132705,HTLC,H1,7,reclaim-bond,network1,30148,2030,OK,,,,
+H1-20260831-132705,HTLC,H1,total,end-to-end,both,0,32196,OK,ABORTED_BOTH,30031,2,nenhum lado efetivou; nada permanece travado

@@ -1,0 +1,344 @@
+package main
+
+// O protocolo HTLC instrumentado, com pontos de injeção de falha.
+//
+// Sequência (Nolan 2013; Herlihy 2018), com alice iniciando:
+//
+//   1. alice trava o bond na rede 1 com hash H e prazo T1
+//   2. bob verifica o lock de alice
+//   3. bob trava os tokens na rede 2 com o MESMO H e prazo T2 < T1
+//   4. alice verifica o lock de bob
+//   5. alice resgata os tokens apresentando o segredo -> o segredo vira público
+//   6. bob lê o segredo do ledger da rede 2 e resgata o bond na rede 1
+//
+// A assimetria T1 > T2 protege quem revela o segredo primeiro: quando alice
+// vaza o segredo no passo 5, bob ainda tem T1 - T2 de folga para agir, e alice
+// não consegue reclamar o bond de volta antes disso.
+
+import (
+	"encoding/base64"
+	"errors"
+	"fmt"
+	"strings"
+	"time"
+
+	am "github.com/hyperledger-cacti/cacti/weaver/sdks/fabric/go-sdk/v3/asset-manager"
+)
+
+// CrashPoint marca onde a execução deve ser interrompida.
+type CrashPoint string
+
+const (
+	CrashNone   CrashPoint = ""       // execução completa
+	CrashLock1  CrashPoint = "lock1"  // após alice travar: bob nunca responde
+	CrashLock2  CrashPoint = "lock2"  // após ambos travarem: ninguém resgata
+	CrashClaim1 CrashPoint = "claim1" // após alice resgatar: segredo já vazou
+)
+
+// ValidCrashPoints lista os valores aceitos, para mensagens de erro.
+var ValidCrashPoints = []string{"none", "lock1", "lock2", "claim1"}
+
+// SwapConfig descreve o que trocar e sob qual falha.
+type SwapConfig struct {
+	Secret     string
+	T1         time.Duration // prazo de quem inicia (alice) — o maior
+	T2         time.Duration // prazo de quem responde (bob) — o menor
+	BondType   string
+	BondID     string
+	TokenType  string
+	TokenQty   uint64
+	CrashAfter CrashPoint
+}
+
+// Validate recusa configurações que violariam a segurança do protocolo.
+func (c SwapConfig) Validate() error {
+	if c.Secret == "" {
+		return errors.New("segredo vazio")
+	}
+	if c.T1 <= c.T2 {
+		return fmt.Errorf(
+			"T1 (%s) precisa ser maior que T2 (%s): quem revela o segredo primeiro "+
+				"precisa da folga para a contraparte agir (ver docs/notas/htlc.md)",
+			c.T1, c.T2)
+	}
+	if c.TokenQty == 0 {
+		return errors.New("quantidade de tokens igual a zero")
+	}
+	return nil
+}
+
+// Swap conduz uma execução do protocolo.
+type Swap struct {
+	cfg SwapConfig
+	rec *Recorder
+
+	// Sessões: uma por (rede, participante). O HTLC precisa das duas
+	// identidades em cada rede, porque locker e recipient são designados por
+	// certificado.
+	n1Alice, n1Bob *Session
+	n2Alice, n2Bob *Session
+
+	hash         string
+	tokenLockID  string // contractId do lock fungível
+	lockedAt     time.Time
+	unlockedAt   time.Time
+	transactions int
+}
+
+// NewSwap monta as quatro sessões necessárias.
+func NewSwap(cfg Config, walletRoot string, sc SwapConfig, rec *Recorder) (*Swap, error) {
+	if err := sc.Validate(); err != nil {
+		return nil, err
+	}
+
+	s := &Swap{cfg: sc, rec: rec}
+
+	type conn struct {
+		target  **Session
+		network string
+		user    string
+	}
+	for _, c := range []conn{
+		{&s.n1Alice, "network1", "alice"},
+		{&s.n1Bob, "network1", "bob"},
+		{&s.n2Alice, "network2", "alice"},
+		{&s.n2Bob, "network2", "bob"},
+	} {
+		sess, err := Connect(cfg, walletRoot, c.network, c.user)
+		if err != nil {
+			s.Close()
+			return nil, err
+		}
+		*c.target = sess
+	}
+	return s, nil
+}
+
+// Close libera todas as sessões.
+func (s *Swap) Close() {
+	for _, sess := range []*Session{s.n1Alice, s.n1Bob, s.n2Alice, s.n2Bob} {
+		if sess != nil {
+			sess.Close()
+		}
+	}
+}
+
+// Hash devolve o hash publicado no passo 1.
+func (s *Swap) Hash() string { return s.hash }
+
+// TokenLockID devolve o contractId do lock fungível (necessário ao resgate).
+func (s *Swap) TokenLockID() string { return s.tokenLockID }
+
+// Run executa o protocolo até o fim ou até o ponto de crash configurado.
+func (s *Swap) Run() (Summary, error) {
+	cfg := s.cfg
+	t1 := uint64(time.Now().Add(cfg.T1).Unix())
+	t2 := uint64(time.Now().Add(cfg.T2).Unix())
+
+	// ---- passo 1: alice trava o bond na rede 1 -----------------------
+	out, err := s.rec.Time(1, "lock-bond", "network1", func() (string, error) {
+		return am.CreateHTLC(
+			s.n1Alice.Contract,
+			cfg.BondType, cfg.BondID,
+			s.n1Bob.CertB64,
+			hashOf(cfg.Secret),
+			t1,
+		)
+	})
+	if err != nil {
+		return s.summarize(OutcomeError, "falha ao travar o bond"), err
+	}
+	s.transactions++
+	s.lockedAt = time.Now()
+	s.hash = hashOf(cfg.Secret)
+	s.rec.Note(1, "hash-published", "network1", s.hash)
+	_ = out
+
+	if cfg.CrashAfter == CrashLock1 {
+		// H1: bob nunca trava. O bond de alice fica preso até T1 expirar.
+		// Não é violação de atomicidade — nenhum lado efetivou — mas é
+		// imobilização de capital, que é o custo que queremos medir.
+		s.rec.Skip(3, "lock-tokens", "network2", "crash injetado após lock1")
+		return s.summarize(OutcomeBlocked,
+			"bond travado, contraparte ausente: aguardando expiração de T1"), nil
+	}
+
+	// ---- passo 2: bob confere o lock de alice ------------------------
+	_, err = s.rec.Time(2, "verify-bond-lock", "network1", func() (string, error) {
+		return am.IsAssetLockedInHTLC(
+			s.n1Bob.Contract,
+			cfg.BondType, cfg.BondID,
+			s.n1Bob.CertB64, s.n1Alice.CertB64,
+		)
+	})
+	if err != nil {
+		return s.summarize(OutcomeError, "bob não confirmou o lock de alice"), err
+	}
+
+	// ---- passo 3: bob trava os tokens na rede 2 ----------------------
+	lockID, err := s.rec.Time(3, "lock-tokens", "network2", func() (string, error) {
+		return am.CreateFungibleHTLC(
+			s.n2Bob.Contract,
+			cfg.TokenType, cfg.TokenQty,
+			s.n2Alice.CertB64,
+			s.hash,
+			t2,
+		)
+	})
+	if err != nil {
+		return s.summarize(OutcomeError, "falha ao travar os tokens"), err
+	}
+	s.transactions++
+	s.tokenLockID = strings.TrimSpace(lockID)
+	s.rec.Note(3, "token-lock-id", "network2", s.tokenLockID)
+
+	if cfg.CrashAfter == CrashLock2 {
+		// Ambos travados, ninguém resgata: os dois prazos expiram e cada um
+		// recupera o seu. Atomicidade preservada, bloqueio máximo.
+		s.rec.Skip(5, "claim-tokens", "network2", "crash injetado após lock2")
+		return s.summarize(OutcomeBlocked,
+			"ambos travados, nenhum resgate: aguardando expiração"), nil
+	}
+
+	// ---- passo 4: alice confere o lock de bob ------------------------
+	_, err = s.rec.Time(4, "verify-token-lock", "network2", func() (string, error) {
+		return am.IsFungibleAssetLockedInHTLC(s.n2Alice.Contract, s.tokenLockID)
+	})
+	if err != nil {
+		return s.summarize(OutcomeError, "alice não confirmou o lock de bob"), err
+	}
+
+	// ---- passo 5: alice resgata e REVELA o segredo -------------------
+	_, err = s.rec.Time(5, "claim-tokens", "network2", func() (string, error) {
+		return am.ClaimFungibleAssetInHTLC(
+			s.n2Alice.Contract,
+			s.tokenLockID,
+			base64.StdEncoding.EncodeToString([]byte(cfg.Secret)),
+		)
+	})
+	if err != nil {
+		return s.summarize(OutcomeError, "alice não conseguiu resgatar os tokens"), err
+	}
+	s.transactions++
+
+	if cfg.CrashAfter == CrashClaim1 {
+		// H2, o cenário perigoso: alice já levou os tokens E o segredo é
+		// público. Se bob não resgatar antes de T1, alice recupera o bond e
+		// fica com os dois ativos — violação de atomicidade. Enquanto T1 não
+		// expira, ainda é recuperável.
+		s.rec.Skip(6, "claim-bond", "network1", "crash injetado após claim1")
+		return s.summarize(OutcomeViolated,
+			"alice recebeu os tokens; bond ainda travado — bob precisa resgatar antes de T1"), nil
+	}
+
+	// ---- passo 6: bob descobre o segredo e resgata -------------------
+	//
+	// Aqui está o mecanismo do HTLC: bob NÃO fala com alice. Ele lê a
+	// pré-imagem do ledger da rede 2, onde o resgate de alice a tornou pública.
+	revealed, err := s.readRevealedSecret()
+	if err != nil {
+		return s.summarize(OutcomeViolated,
+			"bob não recuperou o segredo do ledger"), err
+	}
+	s.rec.Note(6, "secret-from-ledger", "network2", revealed)
+	if revealed != cfg.Secret {
+		return s.summarize(OutcomeError,
+				fmt.Sprintf("segredo lido (%q) difere do original", revealed)),
+			errors.New("segredo divergente")
+	}
+
+	_, err = s.rec.Time(6, "claim-bond", "network1", func() (string, error) {
+		return am.ClaimAssetInHTLC(
+			s.n1Bob.Contract,
+			cfg.BondType, cfg.BondID,
+			s.n1Alice.CertB64,
+			base64.StdEncoding.EncodeToString([]byte(revealed)),
+		)
+	})
+	if err != nil {
+		// Caso mais grave: alice levou os tokens e bob perdeu o bond.
+		return s.summarize(OutcomeViolated,
+			"alice recebeu os tokens mas bob falhou ao resgatar o bond"), err
+	}
+	s.transactions++
+	s.unlockedAt = time.Now()
+
+	return s.summarize(OutcomeCommittedBoth, "troca completa"), nil
+}
+
+// readRevealedSecret lê a pré-imagem publicada no ledger da rede 2.
+func (s *Swap) readRevealedSecret() (string, error) {
+	raw, err := s.n2Bob.Contract.EvaluateTransaction(
+		"GetHTLCHashPreImageByContractId", s.tokenLockID)
+	if err != nil {
+		return "", fmt.Errorf("não foi possível ler a pré-imagem: %w", err)
+	}
+	decoded, err := base64.StdEncoding.DecodeString(strings.Trim(string(raw), `"`))
+	if err != nil {
+		return "", fmt.Errorf("pré-imagem não é base64 válido: %w", err)
+	}
+	return string(decoded), nil
+}
+
+// ReclaimBond devolve o bond a alice após a expiração de T1.
+//
+// No Fabric nada dispara sozinho: sem um cliente externo invocando isto, o
+// ativo fica preso mesmo com o prazo vencido. É o "watchdog" da vítima.
+func (s *Swap) ReclaimBond() error {
+	_, err := s.rec.Time(7, "reclaim-bond", "network1", func() (string, error) {
+		return am.ReclaimAssetInHTLC(
+			s.n1Alice.Contract,
+			s.cfg.BondType, s.cfg.BondID,
+			s.n1Bob.CertB64,
+		)
+	})
+	if err == nil {
+		s.transactions++
+		s.unlockedAt = time.Now()
+	}
+	return err
+}
+
+// ReclaimTokens devolve os tokens a bob após a expiração de T2.
+func (s *Swap) ReclaimTokens() error {
+	if s.tokenLockID == "" {
+		return errors.New("nenhum lock fungível registrado nesta execução")
+	}
+	_, err := s.rec.Time(8, "reclaim-tokens", "network2", func() (string, error) {
+		return am.ReclaimFungibleAssetInHTLC(s.n2Bob.Contract, s.tokenLockID)
+	})
+	if err == nil {
+		s.transactions++
+	}
+	return err
+}
+
+// Summarize recalcula as métricas agregadas no instante da chamada.
+//
+// Precisa ser chamado DEPOIS de eventuais resgates: o tempo de bloqueio só
+// termina quando o ativo volta ao dono, e o resgate é uma escrita a mais no
+// custo. Calcular durante Run() subestimaria as duas coisas.
+func (s *Swap) Summarize(o Outcome, detail string) Summary {
+	return s.summarize(o, detail)
+}
+
+func (s *Swap) summarize(o Outcome, detail string) Summary {
+	lock := time.Duration(0)
+	if !s.lockedAt.IsZero() {
+		end := s.unlockedAt
+		if end.IsZero() {
+			end = time.Now()
+		}
+		lock = end.Sub(s.lockedAt)
+	}
+	return Summary{
+		Outcome:      o,
+		LockDuration: lock,
+		Transactions: s.transactions,
+		Detail:       detail,
+	}
+}
+
+func hashOf(secret string) string {
+	return am.GenerateSHA256HashInBase64Form(secret)
+}
