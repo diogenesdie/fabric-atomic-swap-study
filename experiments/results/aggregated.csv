@@ -18,3 +18,30 @@ B2-r0055,2pc,B2,6,COMMITTED_BOTH,COMMITTED_BOTH,sim,2043,4,4071,os dois ativos t
 B2-r0056,2pc,B2,7,COMMITTED_BOTH,COMMITTED_BOTH,sim,2047,4,4075,os dois ativos trocaram de dono
 B2-r0057,2pc,B2,8,COMMITTED_BOTH,COMMITTED_BOTH,sim,2046,4,4070,os dois ativos trocaram de dono
 B2-r0058,2pc,B2,9,COMMITTED_BOTH,COMMITTED_BOTH,sim,2038,4,4053,os dois ativos trocaram de dono
+B2-r0059,2pc,B2,10,COMMITTED_BOTH,COMMITTED_BOTH,sim,2036,4,4059,os dois ativos trocaram de dono
+B3-r0060,2pc,B3,1,COMMITTED_BOTH,COMMITTED_BOTH,sim,4080,4,8135,os dois ativos trocaram de dono
+B3-r0061,2pc,B3,2,COMMITTED_BOTH,COMMITTED_BOTH,sim,4102,4,8162,os dois ativos trocaram de dono
+B3-r0062,2pc,B3,3,COMMITTED_BOTH,COMMITTED_BOTH,sim,4073,4,8134,os dois ativos trocaram de dono
+B3-r0063,2pc,B3,4,COMMITTED_BOTH,COMMITTED_BOTH,sim,4068,4,8128,os dois ativos trocaram de dono
+B3-r0064,2pc,B3,5,COMMITTED_BOTH,COMMITTED_BOTH,sim,4071,4,8126,os dois ativos trocaram de dono
+B3-r0065,2pc,B3,6,COMMITTED_BOTH,COMMITTED_BOTH,sim,4075,4,8133,os dois ativos trocaram de dono
+B3-r0066,2pc,B3,7,COMMITTED_BOTH,COMMITTED_BOTH,sim,4057,4,8122,os dois ativos trocaram de dono
+B3-r0067,2pc,B3,8,COMMITTED_BOTH,COMMITTED_BOTH,sim,4082,4,8138,os dois ativos trocaram de dono
+B3-r0068,2pc,B3,9,COMMITTED_BOTH,COMMITTED_BOTH,sim,4066,4,8126,os dois ativos trocaram de dono
+B3-r0069,2pc,B3,10,COMMITTED_BOTH,COMMITTED_BOTH,sim,4072,4,8136,os dois ativos trocaram de dono
+H1-r0070,htlc,H1,1,ABORTED_BOTH,ABORTED_BOTH,sim,30053,2,32077,nenhum lado efetivou; nada permanece travado
+H1-r0071,htlc,H1,2,ABORTED_BOTH,ABORTED_BOTH,sim,30058,2,32094,nenhum lado efetivou; nada permanece travado
+H1-r0072,htlc,H1,3,ABORTED_BOTH,ABORTED_BOTH,sim,30050,2,32081,nenhum lado efetivou; nada permanece travado
+H1-r0073,htlc,H1,4,ABORTED_BOTH,ABORTED_BOTH,sim,30054,2,32084,nenhum lado efetivou; nada permanece travado
+H1-r0074,htlc,H1,5,ABORTED_BOTH,ABORTED_BOTH,sim,30049,2,32077,nenhum lado efetivou; nada permanece travado
+H1-r0075,htlc,H1,6,ABORTED_BOTH,ABORTED_BOTH,sim,30042,2,32067,nenhum lado efetivou; nada permanece travado
+H1-r0076,htlc,H1,7,ABORTED_BOTH,ABORTED_BOTH,sim,30051,2,32072,nenhum lado efetivou; nada permanece travado
+H1-r0077,htlc,H1,8,ABORTED_BOTH,ABORTED_BOTH,sim,30046,2,32075,nenhum lado efetivou; nada permanece travado
+H1-r0078,htlc,H1,9,ABORTED_BOTH,ABORTED_BOTH,sim,30052,2,32081,nenhum lado efetivou; nada permanece travado
+H1-r0079,htlc,H1,10,ABORTED_BOTH,ABORTED_BOTH,sim,30056,2,32088,nenhum lado efetivou; nada permanece travado
+H2-r0080,htlc,H2,1,VIOLATED,VIOLATED,sim,34137,4,36174,tokens se moveram mas o bond não foi transferido
+H2-r0081,htlc,H2,2,VIOLATED,VIOLATED,sim,34162,4,36188,tokens se moveram mas o bond não foi transferido
+H2-r0082,htlc,H2,3,VIOLATED,VIOLATED,sim,34160,4,36186,tokens se moveram mas o bond não foi transferido
+H2-r0083,htlc,H2,4,VIOLATED,VIOLATED,sim,34178,4,36209,tokens se moveram mas o bond não foi transferido
+H2-r0084,htlc,H2,5,VIOLATED,VIOLATED,sim,34145,4,36179,tokens se moveram mas o bond não foi transferido
+H2-r0085,htlc,H2,6,VIOLATED,VIOLATED,sim,34146,4,36175,tokens se moveram mas o bond não foi transferido

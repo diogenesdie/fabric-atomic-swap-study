@@ -398,7 +398,7 @@ footer {
   <div class="meta">
     <span><b>Equipe</b> Diógenes Dietrich de Morais · José Francisco Dias Venturini · Pedro Augusto Pereira</span>
     <span><b>Repositório</b> <a href="https://github.com/diogenesdie/fabric-atomic-swap-study">fabric-atomic-swap-study</a></span>
-    <span><b>Situação</b> Etapas 0–4 concluídas · próxima: análise e artigo</span>
+    <span><b>Situação</b> Etapas 0–5 concluídas · escrita do artigo em aberto</span>
   </div>
 </header>
 
@@ -406,7 +406,7 @@ footer {
 <section>
   <div class="section-head">
     <h2>Onde estamos</h2>
-    <span class="tag">8 commits</span>
+    <span class="tag">10 commits</span>
   </div>
 
   <div class="stack">
@@ -1073,6 +1073,86 @@ footer {
   </div>
 </section>
 
+<!-- =========================================================== etapa 5 -->
+<section>
+  <div class="section-head">
+    <span class="n">Etapa 5</span>
+    <h2>Análise, clock skew e o artigo</h2>
+  </div>
+
+  <div class="stack">
+    <p>
+      <code>make analyze</code> transforma o agregado nas tabelas do artigo
+      (Markdown e LaTeX) e em três figuras: desfecho por cenário, latência e
+      capital imobilizado. Nas figuras a cor <b>codifica o desfecho</b>, não
+      decora — verde efetiva, cinza aborta, âmbar bloqueia, vermelho viola.
+    </p>
+
+    <h3>Clock skew: um resultado negativo que vale publicar</h3>
+    <p>
+      Era o ângulo original do trabalho — no Fabric o timelock não é nativo, e
+      ninguém tinha medido o efeito de relógios discordantes. Dois cenários
+      novos, e a resposta é limpa:
+    </p>
+
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Cenário</th><th>Relógio de bob</th><th>O que ele conclui</th><th>Desfecho</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="mono">X1</td><td>adiantado 40 s</td>
+            <td>crê ter <b>−12 s</b> de margem; tem 28 s</td>
+            <td><span class="pill pill-mute">ABORTED_BOTH</span></td>
+          </tr>
+          <tr>
+            <td class="mono">X2</td><td>atrasado 20 s</td>
+            <td>crê ter <b>48 s</b> de margem; tem 28 s</td>
+            <td><span class="pill pill-ok">COMMITTED_BOTH</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="eyebrow">Clock skew custa vivacidade, não segurança</span>
+      <p>
+        Com o relógio adiantado o participante fica <b>excessivamente cauteloso</b>
+        e recusa uma troca que era segura. Com ele atrasado, prossegue sobre uma
+        margem menor do que acredita. <b>Nenhum dos dois produziu violação</b> —
+        porque o prazo é um valor absoluto que as duas partes leem do ledger.
+      </p>
+      <p>
+        A conclusão é mais precisa do que a hipótese inicial: a sincronia de que
+        o HTLC depende é sobre <b>atraso de mensagem e produção de bloco</b>, não
+        sobre as partes concordarem sobre que horas são.
+      </p>
+    </div>
+
+    <h3>Outro resultado negativo</h3>
+    <p>
+      Atraso uniforme de rede <b>não</b> quebra a atomicidade do HTLC no Fabric.
+      Descobrimos por acidente, tentando forçar uma violação no H3: o timelock é
+      avaliado contra o timestamp da <b>proposta</b> da transação, não o do
+      commit. Um resgate submetido antes do prazo continua válido por mais tarde
+      que venha a comitar — no H3 original, submetido em t≈27 s e comitado em
+      t≈46 s, com prazo de 40 s.
+    </p>
+    <p class="tbl-note">
+      Os dois resultados negativos são baratos de relatar e caros de
+      redescobrir. Vão explicitados na introdução do artigo.
+    </p>
+
+    <h3>O artigo</h3>
+    <p>
+      O esqueleto está em <code>docs/paper/outline.md</code>, com o argumento que
+      as medições sustentam, os quatro trabalhos a diferenciar e uma seção de
+      ameaças à validade que nomeia o que este arranjo <em>não</em> mostra: as
+      duas redes num só host, uma organização por rede, ausência de concorrência,
+      e o fato de o braço 2PC ser uma implementação, não a família inteira.
+    </p>
+  </div>
+</section>
+
 <!-- ========================================================== o achado -->
 <section>
   <div class="section-head">
@@ -1175,14 +1255,14 @@ footer {
         <thead><tr><th>Etapa</th><th>Escopo</th><th>Tamanho estimado</th></tr></thead>
         <tbody>
           <tr>
-            <td class="mono">5b</td>
-            <td><b>Repetições.</b> A matriz rodou com N=2, o bastante para validar o harness. Para falar de <em>frequência</em> é preciso N&nbsp;≥&nbsp;10: <code>./experiments/runner.sh --all --repeat=10</code></td>
-            <td>~2 h de execução</td>
+            <td class="mono">6</td>
+            <td><b>Redação do artigo</b>, a partir de <code>docs/paper/outline.md</code>. Antes da introdução, ler Tao et&nbsp;al. (TKDE 2024) por inteiro — é o trabalho mais próximo</td>
+            <td>—</td>
           </tr>
           <tr>
-            <td class="mono">5c</td>
-            <td><b>Clock skew</b> entre os peers das duas redes — o ângulo original que ninguém mediu</td>
-            <td>1 cenário novo</td>
+            <td class="mono">6b</td>
+            <td><b>Seminário</b> (entrega avaliada, 18.09–02.10), a partir de <code>docs/notas/</code> e desta página</td>
+            <td>—</td>
           </tr>
           <tr>
             <td class="mono">5</td>
