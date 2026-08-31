@@ -1,0 +1,975 @@
+<title>Atomicidade sob falha</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap">
+
+<style>
+/* ------------------------------------------------------------------ tokens
+   Tema claro completo no :root. As redefinições de tema só trocam tokens,
+   nunca declaram cor diretamente em componentes. */
+:root {
+  --paper:      #F4F6F5;
+  --surface:    #FFFFFF;
+  --surface-2:  #ECF0EF;
+  --line:       #D8DFDD;
+  --line-soft:  #E6EBEA;
+
+  --ink:        #10161A;
+  --ink-2:      #2B353C;
+  --slate:      #5F6D77;
+  --slate-soft: #85929B;
+
+  --accent:     #0F5F58;
+  --accent-ink: #0B4A44;
+  --accent-wash:#E2EDEB;
+
+  --ok:         #256B45;
+  --ok-wash:    #E1EEE6;
+  --warn:       #96660F;
+  --warn-wash:  #F4EBD8;
+  --bad:        #A2332A;
+  --bad-wash:   #F5E4E1;
+
+  --shadow:     0 1px 2px rgba(16, 22, 26, .05), 0 8px 24px -16px rgba(16, 22, 26, .18);
+
+  --measure:    68ch;
+  --step--1:    0.813rem;
+  --step-0:     1rem;
+  --step-1:     1.19rem;
+  --step-2:     1.5rem;
+  --step-3:     1.95rem;
+  --step-4:     2.6rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper:      #0D1214;
+    --surface:    #141B1E;
+    --surface-2:  #1B2429;
+    --line:       #29343A;
+    --line-soft:  #202A2F;
+
+    --ink:        #E8EEEC;
+    --ink-2:      #C3CFCD;
+    --slate:      #8D9BA1;
+    --slate-soft: #6E7C83;
+
+    --accent:     #4FB3A6;
+    --accent-ink: #7FCCC1;
+    --accent-wash:#14312E;
+
+    --ok:         #63BC8B;
+    --ok-wash:    #122C1F;
+    --warn:       #D7A343;
+    --warn-wash:  #2E2412;
+    --bad:        #E0786B;
+    --bad-wash:   #331816;
+
+    --shadow:     0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper:      #0D1214;
+  --surface:    #141B1E;
+  --surface-2:  #1B2429;
+  --line:       #29343A;
+  --line-soft:  #202A2F;
+
+  --ink:        #E8EEEC;
+  --ink-2:      #C3CFCD;
+  --slate:      #8D9BA1;
+  --slate-soft: #6E7C83;
+
+  --accent:     #4FB3A6;
+  --accent-ink: #7FCCC1;
+  --accent-wash:#14312E;
+
+  --ok:         #63BC8B;
+  --ok-wash:    #122C1F;
+  --warn:       #D7A343;
+  --warn-wash:  #2E2412;
+  --bad:        #E0786B;
+  --bad-wash:   #331816;
+
+  --shadow:     0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+}
+
+/* ------------------------------------------------------------------ base */
+* { box-sizing: border-box; }
+
+body {
+  background: var(--paper);
+  color: var(--ink-2);
+  font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  font-size: var(--step-0);
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  max-width: 78ch;
+  margin: 0 auto;
+  padding: clamp(1.75rem, 4vw, 3.5rem) clamp(1.1rem, 4vw, 2rem) 5rem;
+}
+
+h1, h2, h3 {
+  font-family: "IBM Plex Serif", Georgia, serif;
+  color: var(--ink);
+  text-wrap: balance;
+  line-height: 1.22;
+  margin: 0;
+}
+
+h1 { font-size: var(--step-4); font-weight: 600; letter-spacing: -.02em; }
+h2 { font-size: var(--step-2); font-weight: 600; }
+h3 { font-size: var(--step-1); font-weight: 600; }
+
+p { margin: 0; max-width: var(--measure); }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a:focus-visible,
+summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+code, .mono, th, .num {
+  font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+  font-variant-numeric: tabular-nums;
+}
+code {
+  font-size: .86em;
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 3px;
+  padding: .08em .32em;
+  overflow-wrap: anywhere;
+}
+
+.eyebrow {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--step--1);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--slate);
+  font-weight: 500;
+}
+
+/* --------------------------------------------------------------- header */
+header { display: flex; flex-direction: column; gap: 1.1rem; }
+
+.lede {
+  font-size: var(--step-1);
+  color: var(--ink-2);
+  max-width: 60ch;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem 1.4rem;
+  font-size: var(--step--1);
+  color: var(--slate);
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+.meta b { color: var(--ink-2); font-weight: 500; }
+
+/* ------------------------------------------------------------- sections */
+section { margin-top: 3.5rem; }
+.stack { display: flex; flex-direction: column; gap: 1.1rem; }
+.stack-tight { display: flex; flex-direction: column; gap: .6rem; }
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: .9rem;
+  padding-bottom: .7rem;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 1.5rem;
+}
+.section-head .n {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--step-0);
+  font-weight: 600;
+  color: var(--accent);
+  flex: none;
+}
+.section-head .tag {
+  margin-left: auto;
+  flex: none;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--step--1);
+  color: var(--slate);
+}
+
+/* ------------------------------------------------------------- callouts */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 1.25rem 1.4rem;
+  box-shadow: var(--shadow);
+}
+
+.finding {
+  border-left: 3px solid var(--bad);
+  background: var(--bad-wash);
+  border-radius: 0 5px 5px 0;
+  padding: 1.15rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+}
+.finding .eyebrow { color: var(--bad); }
+
+.note {
+  border-left: 3px solid var(--accent);
+  background: var(--accent-wash);
+  border-radius: 0 5px 5px 0;
+  padding: 1.15rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+}
+.note .eyebrow { color: var(--accent-ink); }
+
+/* --------------------------------------------------------------- tables */
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+table { width: 100%; border-collapse: collapse; font-size: var(--step--1); }
+th {
+  text-align: left;
+  font-weight: 500;
+  font-size: .74rem;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--slate);
+  padding: .7rem .9rem;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+  background: var(--surface-2);
+}
+td {
+  padding: .68rem .9rem;
+  border-bottom: 1px solid var(--line-soft);
+  vertical-align: top;
+}
+tr:last-child td { border-bottom: 0; }
+td.num { text-align: right; white-space: nowrap; }
+.tbl-note { font-size: var(--step--1); color: var(--slate); margin-top: .6rem; }
+
+/* pílulas de desfecho — a cor aqui é informação, não enfeite */
+.pill {
+  display: inline-block;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: .72rem;
+  font-weight: 500;
+  letter-spacing: .04em;
+  padding: .17em .5em;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.pill-ok   { background: var(--ok-wash);   color: var(--ok);   border: 1px solid var(--ok); }
+.pill-warn { background: var(--warn-wash); color: var(--warn); border: 1px solid var(--warn); }
+.pill-bad  { background: var(--bad-wash);  color: var(--bad);  border: 1px solid var(--bad); }
+.pill-mute { background: var(--surface-2); color: var(--slate); border: 1px solid var(--line); }
+
+/* ---------------------------------------------------------------- lists */
+ul.clean { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: .7rem; }
+ul.clean > li { padding-left: 1.1rem; position: relative; max-width: var(--measure); }
+ul.clean > li::before {
+  content: "";
+  position: absolute;
+  left: 0; top: .62em;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+dl.kv { margin: 0; display: grid; grid-template-columns: minmax(9rem, auto) 1fr; gap: .55rem 1.2rem; }
+dl.kv dt { font-family: "IBM Plex Mono", monospace; font-size: var(--step--1); color: var(--slate); }
+dl.kv dd { margin: 0; }
+
+/* ------------------------------------------------------------ pegadinhas */
+details.pit {
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--surface);
+  overflow: hidden;
+}
+details.pit + details.pit { margin-top: .5rem; }
+details.pit summary {
+  cursor: pointer;
+  padding: .7rem .95rem;
+  display: flex;
+  gap: .7rem;
+  align-items: baseline;
+  font-size: var(--step--1);
+  color: var(--ink);
+  list-style: none;
+}
+details.pit summary::-webkit-details-marker { display: none; }
+details.pit summary::after {
+  content: "+";
+  margin-left: auto;
+  font-family: "IBM Plex Mono", monospace;
+  color: var(--slate);
+  flex: none;
+}
+details.pit[open] summary::after { content: "\2212"; }
+details.pit summary .idx {
+  font-family: "IBM Plex Mono", monospace;
+  color: var(--accent);
+  flex: none;
+  font-weight: 500;
+}
+details.pit .body {
+  padding: 0 .95rem 1rem 2.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  font-size: var(--step--1);
+  border-top: 1px solid var(--line-soft);
+  padding-top: .8rem;
+}
+details.pit .body b { color: var(--ink); font-weight: 500; }
+
+/* ------------------------------------------------------------- diagrama */
+figure { margin: 0; display: flex; flex-direction: column; gap: .7rem; }
+figcaption { font-size: var(--step--1); color: var(--slate); max-width: var(--measure); }
+.diagram { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1.2rem; }
+.diagram svg { display: block; min-width: 520px; width: 100%; height: auto; }
+
+.d-track   { stroke: var(--line); stroke-width: 1.5; }
+.d-head    { fill: var(--ink); font: 600 13px "IBM Plex Mono", monospace; }
+.d-arrow   { stroke: var(--accent); stroke-width: 1.75; fill: none; }
+.d-arrow-m { stroke: var(--slate-soft); stroke-width: 1.5; fill: none; stroke-dasharray: 4 3; }
+.d-lbl     { fill: var(--ink-2); font: 400 12px "IBM Plex Sans", sans-serif; }
+.d-num     { fill: var(--accent); font: 600 11px "IBM Plex Mono", monospace; }
+.d-crit    { fill: var(--bad); font: 500 11px "IBM Plex Mono", monospace; }
+.d-tick    { fill: var(--slate); font: 400 11px "IBM Plex Mono", monospace; }
+
+/* ---------------------------------------------------------------- steps */
+.cmds { display: flex; flex-direction: column; gap: .45rem; }
+.cmd {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: .9rem;
+  align-items: baseline;
+  padding: .55rem .8rem;
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  font-size: var(--step--1);
+}
+.cmd .c { font-family: "IBM Plex Mono", monospace; color: var(--accent-ink); white-space: nowrap; font-weight: 500; }
+.cmd .d { color: var(--slate); }
+
+footer {
+  margin-top: 4rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--line);
+  font-size: var(--step--1);
+  color: var(--slate);
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  details.pit summary::after { transition: color .15s ease; }
+}
+
+@media (max-width: 34rem) {
+  dl.kv { grid-template-columns: 1fr; gap: .15rem; }
+  dl.kv dd { margin-bottom: .5rem; }
+  .section-head .tag { display: none; }
+}
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">PPGCC · PUCRS · 2026/2 · Plataformas Computacionais para Sistemas Distribuídos</span>
+  <h1>Atomicidade sob falha</h1>
+  <p class="lede">
+    Estudo comparativo entre <b>HTLC</b> e <b>2PC</b> para atomicidade entre
+    blockchains, medido em duas redes Hyperledger&nbsp;Fabric independentes sob
+    falhas controladas. Este documento registra o que foi feito em cada etapa,
+    o que foi decidido e por quê.
+  </p>
+  <div class="meta">
+    <span><b>Equipe</b> Diógenes Dietrich de Morais · José Francisco Dias Venturini · Pedro Augusto Pereira</span>
+    <span><b>Repositório</b> <a href="https://github.com/diogenesdie/fabric-atomic-swap-study">fabric-atomic-swap-study</a></span>
+    <span><b>Situação</b> Etapas 0–2 concluídas · próxima: braço 2PC</span>
+  </div>
+</header>
+
+<!-- ============================================================ resumo -->
+<section>
+  <div class="section-head">
+    <h2>Onde estamos</h2>
+    <span class="tag">4 commits</span>
+  </div>
+
+  <div class="stack">
+    <p>
+      O braço HTLC está <b>funcionando e medido</b>: um swap atômico completo
+      roda entre as duas redes, e já conseguimos <b>provocar uma violação de
+      atomicidade</b> de forma reprodutível. O braço 2PC ainda não existe — é a
+      próxima etapa, e é onde está a maior parte do código a escrever.
+    </p>
+
+    <div class="finding">
+      <span class="eyebrow">O resultado central até agora</span>
+      <p>
+        No cenário <b>H2</b>, Alice resgata os tokens na rede 2 (revelando o
+        segredo), Bob não age, o prazo expira, e Alice recupera o bond na rede 1.
+        Ela termina com <b>os dois ativos</b>; Bob paga 100 tokens por nada.
+        Estado final medido: <code>bond=alice, alice=10100, bob=7900</code>.
+      </p>
+      <p>
+        É a crítica de Zakhary (2020) ao HTLC — de que um timelock expirado pode
+        violar a atomicidade — reproduzida <b>empiricamente</b> em vez de
+        argumentada. Esse é o achado em torno do qual o artigo se organiza.
+      </p>
+    </div>
+
+    <p>
+      Vale registrar o que <em>não</em> é novidade nossa: essa fragilidade é
+      conhecida na teoria. O que ninguém fez foi medi-la lado a lado com o 2PC,
+      na mesma plataforma, sob as mesmas falhas. É essa a lacuna.
+    </p>
+  </div>
+</section>
+
+<!-- =========================================================== etapa 0 -->
+<section>
+  <div class="section-head">
+    <span class="n">Etapa 0</span>
+    <h2>Fundação e bibliografia</h2>
+    <span class="tag">680cfec · a501e8d</span>
+  </div>
+
+  <div class="stack">
+    <p>
+      Estruturamos o repositório e a base teórica antes de tocar em Fabric, para
+      que o seminário e o artigo tivessem de onde partir.
+    </p>
+
+    <ul class="clean">
+      <li><b>Notas teóricas em português</b> — <code>docs/notas/</code>: HTLC (por que os dois prazos precisam ser diferentes, a hipótese de sincronia), 2PC (commit atômico ≠ consenso, o bloqueio), plataforma e modelos de falha.</li>
+      <li><b>Bibliografia</b> — <code>docs/paper/refs.bib</code>, 42 referências verificadas, com as fundações clássicas (Gray 1978; Gray &amp; Lamport 2006; Skeen 1981) que faltavam no plano original.</li>
+      <li><b>Posicionamento</b> — <code>docs/paper/related-work.md</code>: o enunciado da lacuna e os cinco trabalhos que precisam ser explicitamente diferenciados.</li>
+      <li><b>Registro de decisões</b> — <code>docs/decisoes.md</code>, em formato ADR, com o raciocínio de cada escolha. Serve na defesa.</li>
+    </ul>
+
+    <div class="note">
+      <span class="eyebrow">Atenção ao usar o refs.bib</span>
+      <p>
+        A primeira versão da bibliografia tinha <b>autoria inventada</b>: nomes
+        de coautores preenchidos por inferência. A verificação contra Crossref,
+        DBLP e arXiv encontrou erro em <b>12 das 42 entradas</b>, duas com
+        autores que não existem nos artigos.
+      </p>
+      <p>
+        Todas foram corrigidas e o arquivo abre com um cabeçalho de procedência.
+        <b>Ao acrescentar entradas novas, confira antes de commitar:</b>
+        <code>curl -s https://api.crossref.org/works/&lt;DOI&gt; | jq '.message.author'</code>
+      </p>
+    </div>
+
+    <h3>A lacuna, como vamos enunciá-la</h3>
+    <div class="card stack-tight">
+      <p style="font-style: italic;">
+        “No prior work provides a controlled, implementation-based empirical
+        comparison of HTLC and 2PC-style atomic commitment for cross-chain
+        transactions on a permissioned platform under systematic fault
+        injection.”
+      </p>
+      <p class="tbl-note" style="margin:0;">
+        Cada qualificador exclui um trabalho específico. Retire qualquer um e a
+        afirmação fica falsa.
+      </p>
+    </div>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Trabalho</th><th>O que fez</th><th>Como nos diferenciamos</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Engel, Herlihy &amp; Xue<br><span class="mono" style="color:var(--slate)">SSS 2021</span></td>
+            <td>Percorre a evolução do 2PC ao HTLC — a nossa comparação</td>
+            <td>É <b>analítico</b>, sem implementação nem medição</td>
+          </tr>
+          <tr>
+            <td>Zakhary et al.<br><span class="mono" style="color:var(--slate)">PVLDB 2020</span></td>
+            <td>AC3WN; compara latência contra HTLC</td>
+            <td><b>Model-based</b>, permissionless, <b>sem injeção de falha</b> — a falha que ele usa como argumento é afirmada, não medida</td>
+          </tr>
+          <tr>
+            <td>Tao, Li &amp; Li<br><span class="mono" style="color:var(--slate)">TKDE 2024</span></td>
+            <td>Atomicidade entre cadeias permissionadas sob falhas</td>
+            <td>Propõe protocolo novo (4PC), não compara famílias. <b>Ler antes da introdução</b></td>
+          </tr>
+          <tr>
+            <td>Lu, Jajoo &amp; Namjoshi<br><span class="mono" style="color:var(--slate)">DIN 2024</span></td>
+            <td>Protocolo de duas fases multi-chain</td>
+            <td>Solidity sobre LayerZero, sem baseline HTLC, sem falhas</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="tbl-note">
+      Apoio externo à lacuna: a revisão sistemática de interoperabilidade
+      permissionada (CMC 2025) relata que propriedades ACID e resiliência
+      cross-chain são subexploradas, e que 93% dos estudos examinam menos de
+      quatro propriedades.
+    </p>
+  </div>
+</section>
+
+<!-- =========================================================== etapa 1 -->
+<section>
+  <div class="section-head">
+    <span class="n">Etapa 1</span>
+    <h2>Duas redes Fabric no ar</h2>
+    <span class="tag">1bc1020</span>
+  </div>
+
+  <div class="stack">
+    <p>
+      Esta era a etapa de maior risco do projeto — setup de Fabric quebra por
+      detalhe de versão. Tratamos como <b>portão</b>: nada mais seria escrito
+      antes de um swap rodar de ponta a ponta.
+    </p>
+
+    <p>
+      Reutilizamos o testbed do <b>Hyperledger Cacti/Weaver</b>, que entrega duas
+      redes Fabric 2.5.16 completas, cada uma com peer, orderer e CA próprios.
+      O modo <em>asset exchange</em> do Weaver não precisa de relays nem drivers,
+      o que remove a parte mais pesada da stack.
+    </p>
+
+    <dl class="kv">
+      <dt>containers</dt><dd>12 (6 por rede)</dd>
+      <dt>memória</dt><dd>277 MiB no total — o plano previa 16 GB</dd>
+      <dt>arquitetura</dt><dd>arm64 nativo, sem emulação</dd>
+      <dt>clone</dt><dd>445 MB, pinado no commit <code>2ebe6218</code>, fora do versionamento</dd>
+    </dl>
+
+    <div class="note">
+      <span class="eyebrow">Duas premissas do plano estavam erradas</span>
+      <p>
+        Supúnhamos 16 GB de RAM e risco de emulação em Apple Silicon. Na
+        prática o testbed usa perfil de um peer por rede e LevelDB, e as
+        imagens do Fabric 2.5.16 são nativas para arm64. Cabe folgado.
+      </p>
+    </div>
+
+    <h3>O que quase custou a etapa</h3>
+    <p>
+      Dez pegadinhas, nenhuma documentada pelo Weaver. As três primeiras são
+      defeitos nos <em>connection profiles</em> que o próprio testbed gera —
+      corrigidos automaticamente por
+      <code>scripts/fix_connection_profiles.py</code>, que roda a cada setup
+      porque os arquivos são regerados.
+    </p>
+
+    <div>
+      <details class="pit">
+        <summary><span class="idx">01</span><span>YAML do connection profile não parseia</span></summary>
+        <div class="body">
+          <p><b>Sintoma:</b> <code>yaml: line 88: could not find expected ':'</code></p>
+          <p><b>Causa:</b> o bloco literal do certificado abre com 2 espaços a mais que as linhas seguintes. Em YAML a indentação do bloco é definida pela primeira linha, então as seguintes encerram o bloco e passam a ser lidas como YAML.</p>
+          <p><b>Não resolve:</b> trocar para o <code>.json</code> — aquele arquivo é sintaticamente válido mas não tem a seção <code>orderers</code>.</p>
+        </div>
+      </details>
+      <details class="pit">
+        <summary><span class="idx">02</span><span>Registro de usuário falha: <code>CA registrar not found</code></span></summary>
+        <div class="body">
+          <p>O perfil gerado não traz a entrada <code>registrar</code>, que o SDK usa para autenticar como admin da CA. A identidade de bootstrap é <code>admin:adminpw</code>.</p>
+        </div>
+      </details>
+      <details class="pit">
+        <summary><span class="idx">03</span><span>Nome da CA divergente</span></summary>
+        <div class="body">
+          <p>O perfil declara <code>caName: ca-org1</code>, mas o servidor foi iniciado como <code>ca.org1.network1.com</code>. Confirmável com <code>curl -sk https://localhost:7054/cainfo</code>. O nome correto é a própria chave da entrada.</p>
+        </div>
+      </details>
+      <details class="pit">
+        <summary><span class="idx">04</span><span>Dados de exemplo vencidos — e a CLI mente</span></summary>
+        <div class="body">
+          <p><b>Sintoma:</b> <code>maturity date can not be in past</code> — <b>e a CLI sai com código 0</b>, fingindo sucesso.</p>
+          <p>Os ativos de exemplo do Weaver têm vencimento em 2022. Passamos a gerar fixtures com data futura e a validá-las antes de usar.</p>
+          <p><b>Lição geral:</b> a go-cli engole erros de invocação e retorna 0. Sempre inspecionar o log procurando <code>Invoke error</code>.</p>
+        </div>
+      </details>
+      <details class="pit">
+        <summary><span class="idx">05</span><span><code>ReadAsset</code> só responde ao dono</span></summary>
+        <div class="body">
+          <p>Não existe identidade neutra de observação: quem não é dono recebe <code>cannot access Bond Asset</code>. Para descobrir o dono é preciso tentar cada identidade candidata.</p>
+        </div>
+      </details>
+      <details class="pit">
+        <summary><span class="idx">06</span><span>Titularidade é certificado, não nome</span></summary>
+        <div class="body">
+          <p>O campo <code>owner</code> é o certificado X.509 do dono em base64, não a string <code>alice</code>. Resolvemos comparando com os certificados conhecidos das sessões.</p>
+          <p>Tokens são diferentes: <code>GetMyWallet</code> devolve <code>token1="10000"</code> em claro.</p>
+        </div>
+      </details>
+      <details class="pit">
+        <summary><span class="idx">07</span><span><code>configure asset add</code> não é idempotente</span></summary>
+        <div class="body">
+          <p>Cada execução emite novas unidades de token. Rodar duas vezes dobra os saldos — foi assim que alice apareceu com 20000 em vez de 10000 na primeira tentativa.</p>
+        </div>
+      </details>
+      <details class="pit">
+        <summary><span class="idx">08</span><span>Verbosidade da CLI esconde o sinal</span></summary>
+        <div class="body">
+          <p>A go-cli despeja stack traces enormes do SDK em toda falha. Sempre redirecionar para arquivo e filtrar.</p>
+        </div>
+      </details>
+      <details class="pit">
+        <summary><span class="idx">09</span><span><code>DISCOVERY_AS_LOCALHOST</code> — a variável que ninguém documenta</span></summary>
+        <div class="body">
+          <p><b>Sintoma:</b> toda consulta falha com <code>Endorser Client Status Code: (2)</code> tentando alcançar <code>peer0.org1.network1.com:7051</code>.</p>
+          <p>O service discovery devolve os endereços <b>internos</b> dos peers, que não resolvem a partir do host. A variável faz o SDK reescrevê-los para <code>localhost</code>. A go-cli faz isso sem um único comentário explicando.</p>
+        </div>
+      </details>
+      <details class="pit">
+        <summary><span class="idx">10</span><span>Reset de estado é caro — um ativo por execução</span></summary>
+        <div class="body">
+          <p>Recriar as duas redes leva ~3 minutos, inviável para 10 repetições por cenário. O fixture declara <b>doze bonds</b> (<code>a03</code>–<code>a14</code>) e cada execução pega um virgem via <code>-bond-id</code>.</p>
+          <p>Saldos de token acumulam entre execuções, o que não atrapalha: a classificação compara o estado antes e depois, não valores absolutos.</p>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================== etapa 2 -->
+<section>
+  <div class="section-head">
+    <span class="n">Etapa 2</span>
+    <h2>Braço HTLC instrumentado</h2>
+    <span class="tag">c1432b4</span>
+  </div>
+
+  <div class="stack">
+    <p>
+      Substituímos o script do spike por um programa Go que fala com o SDK do
+      Weaver diretamente. A diferença que importa: os pontos de crash e a
+      cronometragem passam a ser nossos, em vez de ficarem atrás de uma
+      fronteira de subprocesso.
+    </p>
+
+    <dl class="kv">
+      <dt>swap.go</dt><dd>os seis passos do protocolo, com interrupção após <code>lock1</code>, <code>lock2</code> ou <code>claim1</code>, mais os caminhos de devolução por expiração</dd>
+      <dt>state.go</dt><dd>lê os dois ledgers e classifica o desfecho</dd>
+      <dt>metrics.go</dt><dd>CSV por passo, no formato que o coordenador 2PC também vai emitir</dd>
+    </dl>
+
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 620 300" role="img" aria-label="Sequência do swap HTLC entre as duas redes: alice trava o bond na rede 1, bob trava tokens na rede 2, alice resgata revelando o segredo, bob lê o segredo do ledger e resgata o bond.">
+          <!-- trilhas -->
+          <line class="d-track" x1="120" y1="46" x2="120" y2="282"></line>
+          <line class="d-track" x1="500" y1="46" x2="500" y2="282"></line>
+          <text class="d-head" x="120" y="26" text-anchor="middle">rede 1</text>
+          <text class="d-head" x="500" y="26" text-anchor="middle">rede 2</text>
+          <text class="d-tick" x="120" y="40" text-anchor="middle">bond · alice</text>
+          <text class="d-tick" x="500" y="40" text-anchor="middle">tokens · bob</text>
+
+          <!-- passo 1 -->
+          <text class="d-num" x="132" y="72">1</text>
+          <circle cx="120" cy="68" r="4" fill="var(--accent)"></circle>
+          <text class="d-lbl" x="146" y="72">alice trava o bond · prazo T1</text>
+
+          <!-- passo 3 -->
+          <text class="d-num" x="488" y="118" text-anchor="end">3</text>
+          <circle cx="500" cy="114" r="4" fill="var(--accent)"></circle>
+          <text class="d-lbl" x="474" y="118" text-anchor="end">bob trava os tokens · prazo T2</text>
+          <path class="d-arrow-m" d="M132 76 L488 110" marker-end="url(#am)"></path>
+          <text class="d-tick" x="310" y="86" text-anchor="middle">mesmo hash H</text>
+
+          <!-- passo 5 -->
+          <text class="d-num" x="488" y="176" text-anchor="end">5</text>
+          <circle cx="500" cy="172" r="4" fill="var(--accent)"></circle>
+          <text class="d-lbl" x="474" y="176" text-anchor="end">alice resgata: revela o segredo</text>
+          <text class="d-crit" x="474" y="192" text-anchor="end">o segredo vira público no ledger</text>
+
+          <!-- passo 6 -->
+          <text class="d-num" x="132" y="236">6</text>
+          <circle cx="120" cy="232" r="4" fill="var(--accent)"></circle>
+          <text class="d-lbl" x="146" y="236">bob lê o segredo e resgata o bond</text>
+          <path class="d-arrow" d="M488 200 L132 226" marker-end="url(#aa)"></path>
+          <text class="d-tick" x="310" y="228" text-anchor="middle">sem falar com alice</text>
+
+          <!-- resultado -->
+          <line class="d-track" x1="60" y1="262" x2="560" y2="262" stroke-dasharray="3 4"></line>
+          <text class="d-tick" x="120" y="280" text-anchor="middle">bond · bob</text>
+          <text class="d-tick" x="500" y="280" text-anchor="middle">tokens · alice</text>
+
+          <defs>
+            <marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="var(--slate-soft)"></path>
+            </marker>
+            <marker id="aa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"></path>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+      <figcaption>
+        Os passos 2 e 4 são verificações (leituras) e foram omitidos. O ponto
+        conceitual está no passo 6: bob descobre o segredo <b>lendo o ledger da
+        rede 2</b>, sem canal lateral. O segredo é o mecanismo que propaga a
+        decisão entre cadeias que não se conhecem.
+      </figcaption>
+    </figure>
+
+    <h3>Os três cenários medidos</h3>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Cenário</th><th>Falha injetada</th><th>Desfecho</th>
+            <th class="num">Bloqueio</th><th class="num">Escritas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">B1</td>
+            <td>nenhuma (baseline)</td>
+            <td><span class="pill pill-ok">COMMITTED_BOTH</span></td>
+            <td class="num">6,1 s</td><td class="num">4</td>
+          </tr>
+          <tr>
+            <td class="mono">H1</td>
+            <td>Bob nunca trava</td>
+            <td><span class="pill pill-mute">ABORTED_BOTH</span></td>
+            <td class="num">30,0 s</td><td class="num">2</td>
+          </tr>
+          <tr>
+            <td class="mono">H2</td>
+            <td>segredo vaza, Bob não resgata</td>
+            <td><span class="pill pill-bad">VIOLATED</span></td>
+            <td class="num">34,1 s</td><td class="num">4</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="tbl-note">
+      <b>H1</b> quantifica o custo de <em>griefing</em>: Alice imobilizou capital
+      por 30 s e não recebeu nada, apenas porque a contraparte não respondeu.
+      Atomicidade preservada, custo real — é a métrica que Xue &amp; Herlihy
+      formalizam. <b>H2</b> é a violação descrita no início deste documento.
+    </p>
+
+    <div class="note">
+      <span class="eyebrow">No Fabric, nada expira sozinho</span>
+      <p>
+        Não há temporizador no chaincode: <code>time.Now()</code> é
+        não-determinístico e quebra o endosso. Os prazos usam o
+        <em>timestamp</em> da transação, e o resgate por expiração precisa ser
+        <b>invocado por um cliente externo</b>. Sem alguém vivo para exercê-lo,
+        o ativo fica preso mesmo com o prazo vencido.
+      </p>
+      <p>
+        Isso significa que a segurança temporal do HTLC depende de sincronia
+        aproximada de relógios entre peers — uma hipótese extra que precisa ser
+        declarada, e que é <b>injetável</b>. Nenhum trabalho mediu isso: é
+        candidato a experimento original.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================== o achado -->
+<section>
+  <div class="section-head">
+    <h2>O achado que reformula o experimento</h2>
+  </div>
+
+  <div class="stack">
+    <p>
+      A latência do baseline foi <b>8.508 ms em 6 transações</b>. Toda escrita
+      custa ~2,1 s e toda leitura ~50 ms. A causa não é o protocolo: é o
+      <code>BatchTimeout: 2s</code> do orderer, combinado com uma carga que
+      nunca enche um lote.
+    </p>
+
+    <div class="card stack-tight">
+      <p>
+        <b>A latência mede corte de bloco, não lógica de protocolo.</b> O que vai
+        separar HTLC de 2PC não é eficiência de código — é o <b>número de
+        escritas no caminho crítico</b> e se elas podem ir em paralelo.
+      </p>
+      <p>
+        O HTLC tem 4 escritas <b>estritamente sequenciais</b>: o passo 6 não pode
+        começar antes do passo 5 vazar o segredo. O 2PC também tem 4, mas
+        <code>Prepare</code> nas duas redes e <code>Commit</code> nas duas podem
+        ir simultâneos.
+      </p>
+      <p>
+        <b>Previsão quantificada:</b> ~2 rodadas de bloco contra 4, ou seja,
+        cerca de metade da latência para o 2PC no caso sem falha.
+      </p>
+    </div>
+
+    <p>
+      Consequência metodológica: <b>manter o <code>BatchTimeout</code> no
+      padrão</b> e declarar isso no artigo. Reduzi-lo comprimiria as duas curvas
+      e esconderia justamente o efeito de interesse.
+    </p>
+  </div>
+</section>
+
+<!-- ========================================================== decisões -->
+<section>
+  <div class="section-head">
+    <h2>Decisões fechadas</h2>
+    <span class="tag">docs/decisoes.md</span>
+  </div>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Questão</th><th>Decisão</th><th>Motivo</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Topologia</td>
+          <td><b>Duas redes separadas</b></td>
+          <td>O testbed do Weaver já as entrega prontas — dois canais numa rede seria trabalho <em>extra</em>. E permite falhar orderers de forma independente</td>
+        </tr>
+        <tr>
+          <td>Linguagem</td>
+          <td><b>Go</b> em todo código próprio</td>
+          <td>O Weaver é Go e o esqueleto do chaincode é Go; evita o toolchain Node/yarn do monorepo Cacti</td>
+        </tr>
+        <tr>
+          <td>Contratos</td>
+          <td>Weaver para HTLC,<br>implementação própria para 2PC</td>
+          <td>Não existe 2PC cross-chain público para Fabric. AC3WN e Lu et&nbsp;al. não publicaram código</td>
+        </tr>
+        <tr>
+          <td>Vocabulário do 2PC</td>
+          <td>Alinhado ao <b>IETF SATP</b></td>
+          <td>O Stage 3 do padrão é literalmente um 2PC entre gateways. Custo zero, e evita a acusação de compararmos contra um espantalho próprio</td>
+        </tr>
+        <tr>
+          <td>Artigo</td>
+          <td><b>Inglês</b></td>
+          <td>Viabiliza submissão futura</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="tbl-note">
+    A assimetria de esforço entre os braços — HTLC reutilizado, 2PC escrito do
+    zero — é <b>ela própria um achado</b> sobre o estado do ecossistema, e vai
+    declarada no artigo. Vale notar que a Oracle adicionou 2PC cross-channel
+    proprietário ao seu Blockchain Platform justamente porque o Fabric upstream
+    não tem.
+  </p>
+</section>
+
+<!-- =========================================================== próximas -->
+<section>
+  <div class="section-head">
+    <h2>O que vem agora</h2>
+  </div>
+
+  <div class="stack">
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Etapa</th><th>Escopo</th><th>Tamanho estimado</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="mono">3</td>
+            <td><b>Braço 2PC.</b> Chaincode <code>twopc</code> (<code>Prepare</code> / <code>Commit</code> / <code>Abort</code> / <code>TimeoutAbort</code>) mais o coordenador externo com <em>write-ahead log</em></td>
+            <td>~700–1.050 linhas de Go</td>
+          </tr>
+          <tr>
+            <td class="mono">4</td>
+            <td><b>Harness de falhas.</b> <code>tc</code>/<code>netem</code> para atraso, <code>SIGKILL</code> no coordenador, pausa de peer; matriz de 9 cenários × N&nbsp;≥&nbsp;10</td>
+            <td>scripts + cenários</td>
+          </tr>
+          <tr>
+            <td class="mono">5</td>
+            <td><b>Análise e artigo.</b> Agregação em Python, figuras, redação</td>
+            <td>—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="eyebrow">A peça crítica da Etapa 3</span>
+      <p>
+        O coordenador precisa <b>persistir a decisão em disco antes de enviar o
+        primeiro <code>Commit</code></b>. Sem isso, o cenário mais importante do
+        2PC — coordenador morto entre as fases — não produz o bloqueio que
+        queremos medir, e o experimento perde o seu contraste central.
+      </p>
+      <p>
+        Detalhe do Fabric que ajuda: <code>InvokeChaincode</code> entre canais é
+        somente leitura, então o coordenador <b>tem</b> de ser um cliente
+        externo. Que é exatamente o que queremos poder matar.
+      </p>
+    </div>
+
+    <h3>Hipótese a testar</h3>
+    <ul class="clean">
+      <li>O HTLC nunca bloqueia indefinidamente, mas <b>pode violar atomicidade</b> sob atraso — <span class="mono">já confirmado em H2</span>.</li>
+      <li>O 2PC nunca viola atomicidade, mas <b>bloqueia</b> quando o coordenador cai entre as fases — a testar.</li>
+      <li>O par <b>H3 × T3</b> é o coração do artigo: mesma falha (atraso de rede), consequências qualitativamente diferentes — o HTLC perde segurança, o 2PC só perde desempenho.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ rodando -->
+<section>
+  <div class="section-head">
+    <h2>Rodando na sua máquina</h2>
+  </div>
+
+  <div class="stack">
+    <p>
+      Requisitos: Docker com Compose v2, Go 1.21+, <code>make</code>,
+      <code>git</code>, <code>jq</code>, <code>curl</code> e Python 3. Cerca de
+      8 GB livres no Docker bastam.
+    </p>
+
+    <div class="cmds">
+      <div class="cmd"><span class="c">make prereqs</span><span class="d">verifica ferramentas e memória disponível</span></div>
+      <div class="cmd"><span class="c">make setup</span><span class="d">clona o Cacti/Weaver na versão pinada (~445 MB)</span></div>
+      <div class="cmd"><span class="c">make networks-up</span><span class="d">sobe as duas redes Fabric 2.5.16</span></div>
+      <div class="cmd"><span class="c">make setup-htlc</span><span class="d">corrige os perfis, registra alice e bob, popula os ativos</span></div>
+      <div class="cmd"><span class="c">make spike</span><span class="d">executa um swap completo e verifica os dois ledgers</span></div>
+      <div class="cmd"><span class="c">make spike-clean</span><span class="d">o ciclo inteiro do zero, em um comando</span></div>
+    </div>
+
+    <p>Depois, para reproduzir os cenários da Etapa 2:</p>
+
+    <div class="cmds">
+      <div class="cmd"><span class="c">go run ./apps/htlc-orchestrator -scenario=B1</span><span class="d">baseline sem falha</span></div>
+      <div class="cmd"><span class="c">… -scenario=H1 -bond-id=a08 -crash-after=lock1 -t1=25s -t2=12s -reclaim</span><span class="d">contraparte ausente</span></div>
+      <div class="cmd"><span class="c">… -scenario=H2 -bond-id=a09 -crash-after=claim1 -t1=25s -t2=12s -reclaim</span><span class="d">a violação de atomicidade</span></div>
+      <div class="cmd"><span class="c">… -state-only</span><span class="d">só imprime o estado atual dos dois ledgers</span></div>
+    </div>
+
+    <p class="tbl-note">
+      Use um <code>-bond-id</code> diferente a cada execução (<code>a05</code> a
+      <code>a14</code> estão livres) para não precisar recriar as redes. O CSV de
+      cada execução vai para <code>experiments/results/</code>.
+    </p>
+  </div>
+</section>
+
+<footer>
+  <span>Prof. Fernando Luís Dotti · Escola Politécnica · PUCRS</span>
+  <span>Documento gerado a partir do estado do repositório em 31 de agosto de 2026, commit <code>c1432b4</code>.</span>
+</footer>
+
+</div>
