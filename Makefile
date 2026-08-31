@@ -12,6 +12,10 @@ CACTI_DIR ?= $(CURDIR)/cacti
 WEAVER_NET_DIR := $(CACTI_DIR)/weaver/tests/network-setups/fabric/dev
 # Chaincode de aplicação usado no braço HTLC
 HTLC_CHAINCODE ?= simpleasset
+# Repetições por cenário. N=10 é o mínimo para falar de frequência.
+N ?= 10
+# Usa o venv da análise quando existe; senão o python do sistema.
+PY := $(shell [ -x ./.venv/bin/python ] && echo ./.venv/bin/python || echo python3)
 
 .PHONY: help
 help: ## Lista os alvos disponíveis
@@ -75,11 +79,23 @@ deploy-2pc: ## Empacota, instala, aprova e efetiva o chaincode twopc nas duas re
 
 .PHONY: experiments
 experiments: ## Roda a matriz completa de cenários com injeção de falha
-	./experiments/runner.sh --all
+	./experiments/runner.sh --all --repeat=$(N)
+
+.PHONY: scenarios
+scenarios: ## Lista os cenários disponíveis
+	./experiments/runner.sh --list
 
 .PHONY: analyze
-analyze: ## Agrega os CSVs e gera as figuras do artigo
-	python3 analysis/analyze.py
+analyze: ## Agrega os CSVs e gera as figuras e tabelas do artigo
+	$(PY) analysis/analyze.py
+
+.PHONY: summary
+summary: ## Resumo rápido dos resultados no terminal
+	$(PY) analysis/summarize.py
+
+.PHONY: venv
+venv: ## Cria o ambiente Python da análise
+	python3 -m venv .venv && ./.venv/bin/pip install -q -r analysis/requirements.txt
 
 # ---------------------------------------------------------------- qualidade
 

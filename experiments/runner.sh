@@ -154,6 +154,7 @@ run_htlc() {
   local args=(-scenario="$SCENARIO" -run-id="$run_id" -bond-id="$bond"
               -out="$RAW" -t1="${T1:-10m}" -t2="${T2:-5m}")
   [[ -n "${CRASH_AFTER:-}" ]] && args+=(-crash-after="$CRASH_AFTER")
+  [[ -n "${BOB_CLOCK_SKEW:-}" ]] && args+=(-bob-clock-skew="$BOB_CLOCK_SKEW")
   [[ "${RECLAIM:-false}" == "true" ]] && args+=(-reclaim)
 
   go run "$REPO_ROOT/apps/htlc-orchestrator" "${args[@]}" >"$RAW/$run_id.log" 2>&1 || true

@@ -50,6 +50,18 @@ type SwapConfig struct {
 	TokenType  string
 	TokenQty   uint64
 	CrashAfter CrashPoint
+	// BobClockSkew desloca o relógio de bob em relação ao das redes.
+	//
+	// No Fabric o timelock não é nativo: o prazo é um instante absoluto gravado
+	// no estado, e quem o compara é o peer, usando o timestamp da transação. Um
+	// participante com relógio errado calcula o próprio prazo — e a própria
+	// margem de segurança — em cima de uma referência que a rede não
+	// compartilha.
+	//
+	// Positivo = relógio de bob adiantado. É o caso perigoso: ele fixa um prazo
+	// mais tarde do que pretendia e, ao conferir a margem com o próprio
+	// relógio, conclui que está protegido quando não está.
+	BobClockSkew time.Duration
 }
 
 // Validate recusa configurações que violariam a segurança do protocolo.
@@ -190,10 +202,23 @@ func (s *Swap) Run() (run.Summary, error) {
 	// cliente HTLC correto RECUSA travar quando o próprio prazo não caberia
 	// antes do de alice: travar nessa situação é entregar o ativo a quem pode
 	// resgatar dos dois lados.
-	t2 := uint64(time.Now().Add(cfg.T2).Unix())
+	// Bob usa o RELÓGIO DELE, que pode estar deslocado em relação ao da rede.
+	bobNow := time.Now().Add(cfg.BobClockSkew)
+	t2 := uint64(bobNow.Add(cfg.T2).Unix())
+
+	// E confere a margem com a mesma referência errada. É esse o ponto: a
+	// verificação de segurança do protocolo é feita contra o relógio local de
+	// quem verifica, não contra o da rede.
 	margin := int64(t1) - int64(t2)
 	s.rec.Note(3, "safety-margin", "network2",
-		fmt.Sprintf("T1-T2 restante: %ds", margin))
+		fmt.Sprintf("T1-T2 restante: %ds (relógio de bob)", margin))
+
+	if cfg.BobClockSkew != 0 {
+		realMargin := int64(t1) - int64(time.Now().Add(cfg.T2).Unix())
+		s.rec.Note(3, "clock-skew", "network2",
+			fmt.Sprintf("desvio %s: bob crê ter %ds de margem, tem %ds",
+				cfg.BobClockSkew, margin, realMargin))
+	}
 
 	if margin <= 0 {
 		s.rec.Skip(3, "lock-tokens", "network2",

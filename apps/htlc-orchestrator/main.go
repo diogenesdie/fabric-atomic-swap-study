@@ -44,7 +44,9 @@ func main() {
 		bondID    = flag.String("bond-id", "a03", "identificador do ativo")
 		tokenType = flag.String("token-type", "token1", "tipo do ativo fungível")
 		tokenQty  = flag.Uint64("token-qty", 100, "unidades a trocar")
-		reclaim   = flag.Bool("reclaim", false,
+		clockSkew = flag.Duration("bob-clock-skew", 0,
+			"desvio do relógio de bob em relação ao da rede (positivo = adiantado)")
+		reclaim = flag.Bool("reclaim", false,
 			"após a interrupção, esperar a expiração e exercer o resgate por prazo")
 		stateOnly = flag.Bool("state-only", false, "apenas imprimir o estado dos ledgers")
 		seed      = flag.String("seed", "",
@@ -97,14 +99,15 @@ func main() {
 	}
 
 	sc := SwapConfig{
-		Secret:     *secret,
-		T1:         *t1,
-		T2:         *t2,
-		BondType:   *bondType,
-		BondID:     *bondID,
-		TokenType:  *tokenType,
-		TokenQty:   *tokenQty,
-		CrashAfter: cp,
+		Secret:       *secret,
+		T1:           *t1,
+		T2:           *t2,
+		BondType:     *bondType,
+		BondID:       *bondID,
+		TokenType:    *tokenType,
+		TokenQty:     *tokenQty,
+		CrashAfter:   cp,
+		BobClockSkew: *clockSkew,
 	}
 
 	rec := run.NewRecorder(*runID, *scenario, "HTLC")

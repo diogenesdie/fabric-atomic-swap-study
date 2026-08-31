@@ -34,6 +34,7 @@
 
 # Python
 __pycache__/
+.venv/
 *.py[cod]
 .venv/
 venv/
@@ -51,3 +52,9 @@ venv/
 .DS_Store
 .idea/
 .vscode/
+
+# Figuras e tabelas são geradas por `make analyze` a partir do agregado.
+# Versionar o gerado convida a divergir da fonte; o agregado é o que importa.
+/docs/paper/figures/*.pdf
+/docs/paper/figures/results.md
+/docs/paper/figures/results.tex
