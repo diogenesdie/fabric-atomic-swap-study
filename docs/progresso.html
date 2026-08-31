@@ -398,7 +398,7 @@ footer {
   <div class="meta">
     <span><b>Equipe</b> Diógenes Dietrich de Morais · José Francisco Dias Venturini · Pedro Augusto Pereira</span>
     <span><b>Repositório</b> <a href="https://github.com/diogenesdie/fabric-atomic-swap-study">fabric-atomic-swap-study</a></span>
-    <span><b>Situação</b> Etapas 0–3 concluídas · próxima: harness de falhas</span>
+    <span><b>Situação</b> Etapas 0–4 concluídas · próxima: análise e artigo</span>
   </div>
 </header>
 
@@ -406,7 +406,7 @@ footer {
 <section>
   <div class="section-head">
     <h2>Onde estamos</h2>
-    <span class="tag">6 commits</span>
+    <span class="tag">8 commits</span>
   </div>
 
   <div class="stack">
@@ -959,6 +959,120 @@ footer {
   </div>
 </section>
 
+<!-- =========================================================== etapa 4 -->
+<section>
+  <div class="section-head">
+    <span class="n">Etapa 4</span>
+    <h2>Harness e a matriz completa</h2>
+    <span class="tag">facbdaf</span>
+  </div>
+
+  <div class="stack">
+    <p>
+      Onze cenários, cada um declarado num arquivo próprio, executados por um
+      runner que prepara ativos virgens, injeta a falha, classifica o desfecho e
+      agrega tudo. <b>As 22 execuções bateram com o esperado.</b>
+    </p>
+
+    <p>
+      O atraso de rede é injetado com <code>tc</code>/<code>netem</code> a partir
+      de um container auxiliar que compartilha o namespace de rede do alvo — as
+      imagens do Fabric não trazem o <code>iproute2</code>, então não dá para
+      rodar <code>tc</code> dentro delas.
+    </p>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Cenário</th><th>Situação</th><th>Desfecho</th>
+            <th class="num">Latência</th><th class="num">Bloqueio</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">B1</td><td>HTLC sem falha</td>
+              <td><span class="pill pill-ok">COMMITTED_BOTH</span></td>
+              <td class="num">8.137 ms</td><td class="num">6,1 s</td></tr>
+          <tr><td class="mono">B2</td><td>2PC sem falha, fases paralelas</td>
+              <td><span class="pill pill-ok">COMMITTED_BOTH</span></td>
+              <td class="num">4.064 ms</td><td class="num">2,0 s</td></tr>
+          <tr><td class="mono">B3</td><td>2PC sem falha, fases sequenciais</td>
+              <td><span class="pill pill-ok">COMMITTED_BOTH</span></td>
+              <td class="num">8.120 ms</td><td class="num">4,1 s</td></tr>
+          <tr><td class="mono">H1</td><td>HTLC, contraparte ausente</td>
+              <td><span class="pill pill-mute">ABORTED_BOTH</span></td>
+              <td class="num">32.056 ms</td><td class="num">30,0 s</td></tr>
+          <tr><td class="mono">H2</td><td>HTLC, segredo vazou e ninguém resgata</td>
+              <td><span class="pill pill-bad">VIOLATED</span></td>
+              <td class="num">36.148 ms</td><td class="num">34,1 s</td></tr>
+          <tr><td class="mono">H3</td><td>HTLC sob atraso de 800 ms</td>
+              <td><span class="pill pill-mute">ABORTED_BOTH</span></td>
+              <td class="num">45.302 ms</td><td class="num">35,1 s</td></tr>
+          <tr><td class="mono">T1</td><td>2PC, um participante recusa</td>
+              <td><span class="pill pill-mute">ABORTED_BOTH</span></td>
+              <td class="num">4.060 ms</td><td class="num">2,0 s</td></tr>
+          <tr><td class="mono">T2</td><td>2PC, coordenador morto entre as fases</td>
+              <td><span class="pill pill-warn">BLOCKED</span></td>
+              <td class="num">2.040 ms</td><td class="num">indefinido</td></tr>
+          <tr><td class="mono">T2r</td><td>… e depois recuperado pelo WAL</td>
+              <td><span class="pill pill-ok">COMMITTED_BOTH</span></td>
+              <td class="num">2.026 ms</td><td class="num">24,6 s</td></tr>
+          <tr><td class="mono">T3</td><td>2PC sob atraso de 800 ms</td>
+              <td><span class="pill pill-ok">COMMITTED_BOTH</span></td>
+              <td class="num">19.356 ms</td><td class="num">6,9 s</td></tr>
+          <tr><td class="mono">T4</td><td>2PC, prazo dispara num lado só</td>
+              <td><span class="pill pill-bad">VIOLATED</span></td>
+              <td class="num">2.032 ms</td><td class="num">30,8 s</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Os dois pares que sustentam o artigo</h3>
+
+    <div class="note">
+      <span class="eyebrow">H3 × T3 — mesma falha, respostas diferentes</span>
+      <p>
+        Com <b>800 ms de atraso</b> em ambos: o HTLC perde a margem entre os dois
+        prazos e um cliente correto <b>recusa travar</b> em vez de se expor — a
+        troca aborta com segurança, ao custo de 35 s de capital preso. O 2PC
+        apenas fica mais lento (19,4 s) e efetiva normalmente.
+      </p>
+      <p>
+        Sob atraso, portanto, o HTLC paga em <b>vivacidade</b> e o 2PC em
+        <b>desempenho</b>. Nenhum dos dois viola atomicidade só por causa de
+        rede lenta.
+      </p>
+    </div>
+
+    <div class="note">
+      <span class="eyebrow">B2 × B3 — de onde vem a vantagem do 2PC</span>
+      <p>
+        Com as fases <b>sequenciais</b>, o 2PC custa 8.120 ms — praticamente
+        idêntico aos 8.137 ms do HTLC. Toda a vantagem do B2 vem de mandar cada
+        fase às duas redes <b>ao mesmo tempo</b>, não do protocolo em si.
+      </p>
+      <p>
+        É o controle que impede a conclusão preguiçosa de que "2PC é mais
+        rápido". Ele é mais rápido <em>porque paraleliza</em>, e o HTLC não pode
+        paralelizar: o passo 6 depende do segredo que o passo 5 revela.
+      </p>
+    </div>
+
+    <h3>Quatro defeitos que produziam resultado errado em silêncio</h3>
+    <ul class="clean">
+      <li><b>Prazos calculados uma vez só, no início.</b> Na vida real cada parte fixa o próprio prazo quando age, e o tempo entre os dois locks come a margem de segurança — que é justamente o mecanismo que o H3 existe para medir.</li>
+      <li><b><code>IsAssetLocked</code> chamado com <code>(tipo, id)</code></b> onde o chaincode espera um protobuf em base64. O estado "travado" nunca era detectado, e os desfechos <code>BLOCKED</code> do HTLC eram invisíveis.</li>
+      <li><b>Trap de <code>EXIT</code> em bash dispara ao fim de subshells</b> — e substituição de comando cria subshell. Todo <code>$(...)</code> depois de aplicar o atraso o removia na hora: os cenários rodavam <b>sem falha nenhuma</b> e reportavam sucesso.</li>
+      <li><b>Latência somando durações de passos</b>, contando duas vezes as fases paralelas do 2PC e apagando exatamente a vantagem que se queria medir.</li>
+    </ul>
+    <p class="tbl-note">
+      Os três primeiros só apareceram porque um número saiu diferente do
+      esperado e foi investigado em vez de aceito. O runner agora <b>verifica
+      que a falha está ativa</b> antes de executar, e aborta se não estiver.
+    </p>
+  </div>
+</section>
+
 <!-- ========================================================== o achado -->
 <section>
   <div class="section-head">
@@ -1061,9 +1175,14 @@ footer {
         <thead><tr><th>Etapa</th><th>Escopo</th><th>Tamanho estimado</th></tr></thead>
         <tbody>
           <tr>
-            <td class="mono">4</td>
-            <td><b>Harness de falhas.</b> <code>tc</code>/<code>netem</code> para atraso, pausa de peer, e a matriz completa × N&nbsp;≥&nbsp;10 repetições. Inclui os cenários que faltam: H3 (atraso além da margem do timelock), T3 e o <em>clock skew</em></td>
-            <td>scripts + cenários</td>
+            <td class="mono">5b</td>
+            <td><b>Repetições.</b> A matriz rodou com N=2, o bastante para validar o harness. Para falar de <em>frequência</em> é preciso N&nbsp;≥&nbsp;10: <code>./experiments/runner.sh --all --repeat=10</code></td>
+            <td>~2 h de execução</td>
+          </tr>
+          <tr>
+            <td class="mono">5c</td>
+            <td><b>Clock skew</b> entre os peers das duas redes — o ângulo original que ninguém mediu</td>
+            <td>1 cenário novo</td>
           </tr>
           <tr>
             <td class="mono">5</td>
@@ -1153,7 +1272,7 @@ footer {
 
 <footer>
   <span>Prof. Fernando Luís Dotti · Escola Politécnica · PUCRS</span>
-  <span>Documento gerado a partir do estado do repositório em 31 de agosto de 2026, commit <code>299e1df</code>.</span>
+  <span>Documento gerado a partir do estado do repositório em 31 de agosto de 2026, commit <code>facbdaf</code>.</span>
 </footer>
 
 </div>
