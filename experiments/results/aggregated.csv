@@ -45,3 +45,87 @@ H2-r0082,htlc,H2,3,VIOLATED,VIOLATED,sim,34160,4,36186,tokens se moveram mas o b
 H2-r0083,htlc,H2,4,VIOLATED,VIOLATED,sim,34178,4,36209,tokens se moveram mas o bond não foi transferido
 H2-r0084,htlc,H2,5,VIOLATED,VIOLATED,sim,34145,4,36179,tokens se moveram mas o bond não foi transferido
 H2-r0085,htlc,H2,6,VIOLATED,VIOLATED,sim,34146,4,36175,tokens se moveram mas o bond não foi transferido
+H2-r0086,htlc,H2,7,VIOLATED,VIOLATED,sim,34142,4,36177,tokens se moveram mas o bond não foi transferido
+H2-r0087,htlc,H2,8,VIOLATED,VIOLATED,sim,34158,4,36191,tokens se moveram mas o bond não foi transferido
+H2-r0088,htlc,H2,9,VIOLATED,VIOLATED,sim,34144,4,36171,tokens se moveram mas o bond não foi transferido
+H2-r0089,htlc,H2,10,VIOLATED,VIOLATED,sim,34116,4,36145,tokens se moveram mas o bond não foi transferido
+H3-r0090,htlc,H3,1,ABORTED_BOTH,ABORTED_BOTH,sim,35051,2,45653,nenhum lado efetivou; nada permanece travado
+H3-r0091,htlc,H3,2,ABORTED_BOTH,ABORTED_BOTH,sim,35064,2,44947,nenhum lado efetivou; nada permanece travado
+H3-r0092,htlc,H3,3,ABORTED_BOTH,ABORTED_BOTH,sim,35069,2,45131,nenhum lado efetivou; nada permanece travado
+H3-r0093,htlc,H3,4,ABORTED_BOTH,ABORTED_BOTH,sim,35054,2,44846,nenhum lado efetivou; nada permanece travado
+H3-r0094,htlc,H3,5,ABORTED_BOTH,ABORTED_BOTH,sim,35032,2,44842,nenhum lado efetivou; nada permanece travado
+H3-r0095,htlc,H3,6,ABORTED_BOTH,ABORTED_BOTH,sim,35045,2,44927,nenhum lado efetivou; nada permanece travado
+H3-r0096,htlc,H3,7,ABORTED_BOTH,ABORTED_BOTH,sim,35047,2,44893,nenhum lado efetivou; nada permanece travado
+H3-r0097,htlc,H3,8,ABORTED_BOTH,ABORTED_BOTH,sim,35035,2,45697,nenhum lado efetivou; nada permanece travado
+H3-r0098,htlc,H3,9,ABORTED_BOTH,ABORTED_BOTH,sim,35060,2,44925,nenhum lado efetivou; nada permanece travado
+H3-r0099,htlc,H3,10,ABORTED_BOTH,ABORTED_BOTH,sim,35095,2,44963,nenhum lado efetivou; nada permanece travado
+T1-r0100,2pc,T1,1,ABORTED_BOTH,ABORTED_BOTH,sim,2041,2,4064,nenhum lado efetivou; nada em custódia
+T1-r0101,2pc,T1,2,ABORTED_BOTH,ABORTED_BOTH,sim,2032,2,4063,nenhum lado efetivou; nada em custódia
+T1-r0102,2pc,T1,3,ABORTED_BOTH,ABORTED_BOTH,sim,2037,2,4056,nenhum lado efetivou; nada em custódia
+T1-r0103,2pc,T1,4,ABORTED_BOTH,ABORTED_BOTH,sim,2036,2,4105,nenhum lado efetivou; nada em custódia
+T1-r0104,2pc,T1,5,ABORTED_BOTH,ABORTED_BOTH,sim,2033,2,4056,nenhum lado efetivou; nada em custódia
+T1-r0105,2pc,T1,6,ABORTED_BOTH,ABORTED_BOTH,sim,2030,2,4053,nenhum lado efetivou; nada em custódia
+T1-r0106,2pc,T1,7,ABORTED_BOTH,ABORTED_BOTH,sim,2028,2,4050,nenhum lado efetivou; nada em custódia
+T1-r0107,2pc,T1,8,ABORTED_BOTH,ABORTED_BOTH,sim,2034,2,4058,nenhum lado efetivou; nada em custódia
+T1-r0108,2pc,T1,9,ABORTED_BOTH,ABORTED_BOTH,sim,2034,2,4057,nenhum lado efetivou; nada em custódia
+T1-r0109,2pc,T1,10,ABORTED_BOTH,ABORTED_BOTH,sim,2030,2,4048,nenhum lado efetivou; nada em custódia
+T2-r0110,2pc,T2,1,BLOCKED,BLOCKED,sim,25,2,2046,nenhum lado efetivou e há ativo preso em custódia ([rede 1 rede 2])
+T2-r0111,2pc,T2,2,BLOCKED,BLOCKED,sim,31,2,2043,nenhum lado efetivou e há ativo preso em custódia ([rede 1 rede 2])
+T2-r0112,2pc,T2,3,BLOCKED,BLOCKED,sim,28,2,2039,nenhum lado efetivou e há ativo preso em custódia ([rede 1 rede 2])
+T2-r0113,2pc,T2,4,BLOCKED,BLOCKED,sim,26,2,2044,nenhum lado efetivou e há ativo preso em custódia ([rede 1 rede 2])
+T2-r0114,2pc,T2,5,BLOCKED,BLOCKED,sim,28,2,2037,nenhum lado efetivou e há ativo preso em custódia ([rede 1 rede 2])
+T2-r0115,2pc,T2,6,BLOCKED,BLOCKED,sim,29,2,2039,nenhum lado efetivou e há ativo preso em custódia ([rede 1 rede 2])
+T2-r0116,2pc,T2,7,BLOCKED,BLOCKED,sim,31,2,2041,nenhum lado efetivou e há ativo preso em custódia ([rede 1 rede 2])
+T2-r0117,2pc,T2,8,BLOCKED,BLOCKED,sim,29,2,2043,nenhum lado efetivou e há ativo preso em custódia ([rede 1 rede 2])
+T2-r0118,2pc,T2,9,BLOCKED,BLOCKED,sim,24,2,2032,nenhum lado efetivou e há ativo preso em custódia ([rede 1 rede 2])
+T2-r0119,2pc,T2,10,BLOCKED,BLOCKED,sim,31,2,2045,nenhum lado efetivou e há ativo preso em custódia ([rede 1 rede 2])
+T2r-r0120,2pc,T2r,1,COMMITTED_BOTH,COMMITTED_BOTH,sim,24431,2,2023,os dois ativos trocaram de dono
+T2r-r0121,2pc,T2r,2,COMMITTED_BOTH,COMMITTED_BOTH,sim,24648,2,2030,os dois ativos trocaram de dono
+T2r-r0122,2pc,T2r,3,COMMITTED_BOTH,COMMITTED_BOTH,sim,24587,2,2025,os dois ativos trocaram de dono
+T2r-r0123,2pc,T2r,4,COMMITTED_BOTH,COMMITTED_BOTH,sim,24630,2,2025,os dois ativos trocaram de dono
+T2r-r0124,2pc,T2r,5,COMMITTED_BOTH,COMMITTED_BOTH,sim,24338,2,2022,os dois ativos trocaram de dono
+T2r-r0125,2pc,T2r,6,COMMITTED_BOTH,COMMITTED_BOTH,sim,24617,2,2034,os dois ativos trocaram de dono
+T2r-r0126,2pc,T2r,7,COMMITTED_BOTH,COMMITTED_BOTH,sim,24370,2,2020,os dois ativos trocaram de dono
+T2r-r0127,2pc,T2r,8,COMMITTED_BOTH,COMMITTED_BOTH,sim,24658,2,2034,os dois ativos trocaram de dono
+T2r-r0128,2pc,T2r,9,COMMITTED_BOTH,COMMITTED_BOTH,sim,24367,2,2022,os dois ativos trocaram de dono
+T2r-r0129,2pc,T2r,10,COMMITTED_BOTH,COMMITTED_BOTH,sim,24668,2,2027,os dois ativos trocaram de dono
+T3-r0130,2pc,T3,1,COMMITTED_BOTH,COMMITTED_BOTH,sim,6878,4,19363,os dois ativos trocaram de dono
+T3-r0131,2pc,T3,2,COMMITTED_BOTH,COMMITTED_BOTH,sim,6861,4,19327,os dois ativos trocaram de dono
+T3-r0132,2pc,T3,3,COMMITTED_BOTH,COMMITTED_BOTH,sim,6882,4,19356,os dois ativos trocaram de dono
+T3-r0133,2pc,T3,4,COMMITTED_BOTH,COMMITTED_BOTH,sim,6867,4,19353,os dois ativos trocaram de dono
+T3-r0134,2pc,T3,5,COMMITTED_BOTH,COMMITTED_BOTH,sim,6874,4,19359,os dois ativos trocaram de dono
+T3-r0135,2pc,T3,6,COMMITTED_BOTH,COMMITTED_BOTH,sim,6883,4,19372,os dois ativos trocaram de dono
+T3-r0136,2pc,T3,7,COMMITTED_BOTH,COMMITTED_BOTH,sim,6863,4,19339,os dois ativos trocaram de dono
+T3-r0137,2pc,T3,8,COMMITTED_BOTH,COMMITTED_BOTH,sim,6887,4,19372,os dois ativos trocaram de dono
+T3-r0138,2pc,T3,9,COMMITTED_BOTH,COMMITTED_BOTH,sim,6861,4,19341,os dois ativos trocaram de dono
+T3-r0139,2pc,T3,10,COMMITTED_BOTH,COMMITTED_BOTH,sim,6872,4,19343,os dois ativos trocaram de dono
+T4-r0140,2pc,T4,1,VIOLATED,VIOLATED,sim,30816,1,2020,só o ativo da rede 1 trocou de dono
+T4-r0141,2pc,T4,2,VIOLATED,VIOLATED,sim,30789,1,2026,só o ativo da rede 1 trocou de dono
+T4-r0142,2pc,T4,3,VIOLATED,VIOLATED,sim,30845,1,2026,só o ativo da rede 1 trocou de dono
+T4-r0143,2pc,T4,4,VIOLATED,VIOLATED,sim,30513,1,2035,só o ativo da rede 1 trocou de dono
+T4-r0144,2pc,T4,5,VIOLATED,VIOLATED,sim,30781,1,2024,só o ativo da rede 1 trocou de dono
+T4-r0145,2pc,T4,6,VIOLATED,VIOLATED,sim,30807,1,2027,só o ativo da rede 1 trocou de dono
+T4-r0146,2pc,T4,7,VIOLATED,VIOLATED,sim,30797,1,2042,só o ativo da rede 1 trocou de dono
+T4-r0147,2pc,T4,8,VIOLATED,VIOLATED,sim,30841,1,2032,só o ativo da rede 1 trocou de dono
+T4-r0148,2pc,T4,9,VIOLATED,VIOLATED,sim,30848,1,2036,só o ativo da rede 1 trocou de dono
+T4-r0149,2pc,T4,10,VIOLATED,VIOLATED,sim,30830,1,2026,só o ativo da rede 1 trocou de dono
+X1-r0150,htlc,X1,1,ABORTED_BOTH,ABORTED_BOTH,sim,65077,2,67101,nenhum lado efetivou; nada permanece travado
+X1-r0151,htlc,X1,2,ABORTED_BOTH,ABORTED_BOTH,sim,65059,2,67079,nenhum lado efetivou; nada permanece travado
+X1-r0152,htlc,X1,3,ABORTED_BOTH,ABORTED_BOTH,sim,65063,2,67088,nenhum lado efetivou; nada permanece travado
+X1-r0153,htlc,X1,4,ABORTED_BOTH,ABORTED_BOTH,sim,65068,2,67095,nenhum lado efetivou; nada permanece travado
+X1-r0154,htlc,X1,5,ABORTED_BOTH,ABORTED_BOTH,sim,65060,2,67086,nenhum lado efetivou; nada permanece travado
+X1-r0155,htlc,X1,6,ABORTED_BOTH,ABORTED_BOTH,sim,65067,2,67091,nenhum lado efetivou; nada permanece travado
+X1-r0156,htlc,X1,7,ABORTED_BOTH,ABORTED_BOTH,sim,65058,2,67086,nenhum lado efetivou; nada permanece travado
+X1-r0157,htlc,X1,8,ABORTED_BOTH,ABORTED_BOTH,sim,65062,2,67098,nenhum lado efetivou; nada permanece travado
+X1-r0158,htlc,X1,9,ABORTED_BOTH,ABORTED_BOTH,sim,65081,2,67107,nenhum lado efetivou; nada permanece travado
+X1-r0159,htlc,X1,10,ABORTED_BOTH,ABORTED_BOTH,sim,65043,2,67060,nenhum lado efetivou; nada permanece travado
+X2-r0160,htlc,X2,1,COMMITTED_BOTH,COMMITTED_BOTH,sim,6110,4,8137,bond transferido e tokens movidos
+X2-r0161,htlc,X2,2,COMMITTED_BOTH,COMMITTED_BOTH,sim,6132,4,8158,bond transferido e tokens movidos
+X2-r0162,htlc,X2,3,COMMITTED_BOTH,COMMITTED_BOTH,sim,6133,4,8159,bond transferido e tokens movidos
+X2-r0163,htlc,X2,4,COMMITTED_BOTH,COMMITTED_BOTH,sim,6123,4,8148,bond transferido e tokens movidos
+X2-r0164,htlc,X2,5,COMMITTED_BOTH,COMMITTED_BOTH,sim,6135,4,8163,bond transferido e tokens movidos
+X2-r0165,htlc,X2,6,COMMITTED_BOTH,COMMITTED_BOTH,sim,6144,4,8169,bond transferido e tokens movidos
+X2-r0166,htlc,X2,7,COMMITTED_BOTH,COMMITTED_BOTH,sim,6119,4,8145,bond transferido e tokens movidos
+X2-r0167,htlc,X2,8,COMMITTED_BOTH,COMMITTED_BOTH,sim,6130,4,8155,bond transferido e tokens movidos
+X2-r0168,htlc,X2,9,COMMITTED_BOTH,COMMITTED_BOTH,sim,6092,4,8115,bond transferido e tokens movidos
+X2-r0169,htlc,X2,10,COMMITTED_BOTH,COMMITTED_BOTH,sim,6134,4,8165,bond transferido e tokens movidos
