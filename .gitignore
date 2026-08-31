@@ -1,0 +1,45 @@
+# Clone do monorepo Hyperledger Cacti/Weaver (baixado por scripts/01-clone-weaver.sh)
+/cacti/
+
+# Binários compilados
+/bin/
+*.exe
+*.test
+*.out
+
+# Chaincode empacotado
+*.tar.gz
+
+# Resultados brutos dos experimentos (os agregados em results/aggregated/ são versionados)
+/experiments/results/raw/
+/experiments/results/**/*.log
+
+# Write-ahead log do coordenador (estado de execução, não código)
+/apps/coordinator/wal/
+*.wal
+
+# Material de identidade do Fabric gerado localmente
+/wallets/
+/crypto-config/
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# LaTeX (artigo)
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.toc
+
+# Sistema operacional / editor
+.DS_Store
+.idea/
+.vscode/

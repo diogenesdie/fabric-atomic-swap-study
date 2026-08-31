@@ -1,0 +1,588 @@
+% =====================================================================
+% HTLC vs 2PC — bibliografia do estudo comparativo
+%
+% Organização:
+%   1. Fundações de commit atômico (2PC clássico)
+%   2. Swaps atômicos e HTLC
+%   3. Commit atômico cross-chain / 2PC cross-chain
+%   4. Surveys de interoperabilidade
+%   5. Padrões e implementações (SATP, Cacti/Weaver, Interledger)
+%   6. Plataforma, benchmarking e injeção de falhas
+%
+% Convenção: chave = primeiroautor+ano+palavra.
+% =====================================================================
+
+
+% =====================================================================
+% 1. FUNDAÇÕES DE COMMIT ATÔMICO
+% =====================================================================
+
+@incollection{gray1978notes,
+  author    = {Gray, Jim N.},
+  title     = {Notes on Data Base Operating Systems},
+  booktitle = {Operating Systems: An Advanced Course},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {60},
+  pages     = {393--481},
+  publisher = {Springer},
+  year      = {1978},
+  doi       = {10.1007/3-540-08755-9_9},
+  note      = {Origem do protocolo de duas fases e da caracterização do
+               problema de bloqueio}
+}
+
+% ATENÇÃO: é Gray & LAMPORT (Leslie Lamport), não Lampson. Erro comum.
+@article{gray2006consensus,
+  author  = {Gray, Jim and Lamport, Leslie},
+  title   = {Consensus on Transaction Commit},
+  journal = {ACM Transactions on Database Systems},
+  volume  = {31},
+  number  = {1},
+  pages   = {133--160},
+  year    = {2006},
+  doi     = {10.1145/1132863.1132867},
+  eprint  = {cs/0408036},
+  note    = {Paxos Commit. Justifica por que o coordenador 2PC ingênuo é ponto
+             único de falha — motiva o cenário T2}
+}
+
+@inproceedings{skeen1981nonblocking,
+  author    = {Skeen, Dale},
+  title     = {Nonblocking Commit Protocols},
+  booktitle = {Proceedings of the 1981 ACM SIGMOD International Conference on
+               Management of Data},
+  pages     = {133--142},
+  year      = {1981},
+  doi       = {10.1145/582318.582339},
+  note      = {3PC e a caracterização formal de não-bloqueio}
+}
+
+@book{bernstein1987concurrency,
+  author    = {Bernstein, Philip A. and Hadzilacos, Vassos and Goodman, Nathan},
+  title     = {Concurrency Control and Recovery in Database Systems},
+  publisher = {Addison-Wesley},
+  year      = {1987},
+  isbn      = {0-201-10715-5},
+  note      = {Cap. 7, Distributed Recovery: propriedades AC1--AC5 que
+               verificamos empiricamente}
+}
+
+@article{maiyya2019unifying,
+  author  = {Maiyya, Sujaya and Nawab, Faisal and Agrawal, Divyakant and
+             El Abbadi, Amr},
+  title   = {Unifying Consensus and Atomic Commitment for Effective Cloud Data
+             Management},
+  journal = {Proceedings of the VLDB Endowment},
+  volume  = {12},
+  number  = {5},
+  pages   = {611--623},
+  year    = {2019},
+  doi     = {10.14778/3303753.3303765},
+  note    = {Ponte entre consenso e commit atômico; mesmo grupo do AC3WN}
+}
+
+
+% =====================================================================
+% 2. SWAPS ATÔMICOS E HTLC
+% =====================================================================
+
+@misc{nolan2013alt,
+  author       = {Nolan, Tier},
+  title        = {Alt chains and atomic transfers},
+  howpublished = {Bitcointalk forum},
+  year         = {2013},
+  url          = {https://bitcointalk.org/index.php?topic=193281.0},
+  note         = {Construção original do swap atômico com hashlock e timelocks
+                  assimétricos}
+}
+
+@inproceedings{herlihy2018atomic,
+  author    = {Herlihy, Maurice},
+  title     = {Atomic Cross-Chain Swaps},
+  booktitle = {Proceedings of the 2018 ACM Symposium on Principles of
+               Distributed Computing (PODC)},
+  pages     = {245--254},
+  year      = {2018},
+  doi       = {10.1145/3212734.3212736},
+  eprint    = {1801.09515},
+  note      = {Formalização do swap atômico como grafo de dependências;
+               referência base do braço HTLC}
+}
+
+@article{herlihy2022crosschain,
+  author  = {Herlihy, Maurice and Liskov, Barbara and Shrira, Liuba},
+  title   = {Cross-chain deals and adversarial commerce},
+  journal = {The VLDB Journal},
+  volume  = {31},
+  number  = {6},
+  pages   = {1291--1309},
+  year    = {2022},
+  doi     = {10.1007/s00778-021-00686-1},
+  note    = {Generaliza swaps para deals; introduz o modelo de comércio
+             adversarial}
+}
+
+@inproceedings{thyagarajan2022universal,
+  author    = {Thyagarajan, Sri Aravinda Krishnan and Malavolta, Giulio and
+               Moreno-Sanchez, Pedro},
+  title     = {Universal Atomic Swaps: Secure Exchange of Coins Across All
+               Blockchains},
+  booktitle = {2022 IEEE Symposium on Security and Privacy (SP)},
+  pages     = {1299--1316},
+  year      = {2022},
+  doi       = {10.1109/SP46214.2022.9833731},
+  note      = {Adaptor signatures dispensam hashlock — fronteira criptográfica
+               além do HTLC}
+}
+
+@inproceedings{tsabary2021madhtlc,
+  author    = {Tsabary, Itay and Yechieli, Matan and Manuskin, Alex and
+               Eyal, Ittay},
+  title     = {{MAD-HTLC}: Because {HTLC} is Crazy-Cheap to Attack},
+  booktitle = {2021 IEEE Symposium on Security and Privacy (SP)},
+  pages     = {1230--1248},
+  year      = {2021},
+  doi       = {10.1109/SP40001.2021.00080},
+  eprint    = {2006.12031},
+  note      = {Ataque de suborno ao HTLC. Em ambiente permissionado o vetor
+               desaparece — achado a declarar explicitamente}
+}
+
+@inproceedings{xue2021hedging,
+  author    = {Xue, Yingjie and Herlihy, Maurice},
+  title     = {Hedging Against Sore Loser Attacks in Cross-Chain Transactions},
+  booktitle = {Proceedings of the 2021 ACM Symposium on Principles of
+               Distributed Computing (PODC)},
+  pages     = {155--164},
+  year      = {2021},
+  doi       = {10.1145/3465084.3467904},
+  eprint    = {2105.06322},
+  note      = {Formaliza o custo de lock-up/griefing — exatamente a métrica de
+               tempo de bloqueio que medimos}
+}
+
+@inproceedings{mazumdar2022faster,
+  author    = {Mazumdar, Subhra},
+  title     = {Towards Faster Settlement in {HTLC}-based Cross-Chain Atomic
+               Swaps},
+  booktitle = {2022 IEEE 4th International Conference on Trust, Privacy and
+               Security in Intelligent Systems, and Applications (TPS-ISA)},
+  year      = {2022},
+  doi       = {10.1109/TPS-ISA56441.2022.00048},
+  eprint    = {2211.15804},
+  note      = {Teoria do atraso de liquidação do HTLC}
+}
+
+@inproceedings{narayanam2022shared,
+  author    = {Narayanam, Krishnasuri and Ramakrishna, Venkatraman and
+               Vinayagamurthy, Dhinakaran and Nishad, Sandeep},
+  title     = {Atomic Cross-Chain Exchanges of Shared Assets},
+  booktitle = {Proceedings of the 4th ACM Conference on Advances in Financial
+               Technologies (AFT)},
+  year      = {2022},
+  doi       = {10.1145/3558535.3559786},
+  eprint    = {2202.12855},
+  note      = {MPHTLC com prova de conceito em Fabric + Corda dentro do Weaver —
+               a implementação publicada mais próxima da nossa}
+}
+
+
+% =====================================================================
+% 3. COMMIT ATÔMICO CROSS-CHAIN / 2PC CROSS-CHAIN
+% =====================================================================
+
+@article{zakhary2020atomic,
+  author  = {Zakhary, Victor and Agrawal, Divyakant and El Abbadi, Amr},
+  title   = {Atomic Commitment Across Blockchains},
+  journal = {Proceedings of the VLDB Endowment},
+  volume  = {13},
+  number  = {9},
+  pages   = {1319--1331},
+  year    = {2020},
+  doi     = {10.14778/3397230.3397231},
+  eprint  = {1905.02847},
+  note    = {AC3WN. A crítica ao HTLC (timelock expirado viola atomicidade) é o
+             argumento que o cenário H3 testa empiricamente}
+}
+
+@inproceedings{lu2024twophase,
+  author    = {Lu, Hongbo and Jajoo, Anup and Namjoshi, Kedar S.},
+  title     = {A Two-Phase Protocol for Atomic Multi-Chain Transactions},
+  booktitle = {Proceedings of the 5th ACM International Workshop on
+               Distributed Infrastructure for the Common Good (DIN)},
+  pages     = {21--27},
+  year      = {2024},
+  doi       = {10.1145/3694809.3700742}
+}
+
+@misc{lu2024atomicity,
+  author = {Lu, Hongbo and Jajoo, Anup and Namjoshi, Kedar S.},
+  title  = {Atomicity and Abstraction for Cross-Blockchain Interactions},
+  year   = {2024},
+  eprint = {2403.07248},
+  note   = {Versão estendida de \cite{lu2024twophase}, com o detalhamento
+            técnico e as contagens de linhas de código do protótipo}
+}
+
+@article{falazi2025transactional,
+  author    = {Falazi, Ghareeb and Breitenb{\"u}cher, Uwe and Leymann, Frank and
+               Schulte, Stefan and Yussupov, Vladimir},
+  title     = {Transactional Cross-Chain Smart Contract Invocations},
+  journal   = {Distributed Ledger Technologies: Research and Practice},
+  volume    = {4},
+  number    = {2},
+  articleno = {17},
+  pages     = {17:1--17:26},
+  year      = {2025},
+  doi       = {10.1145/3616023},
+  note      = {2PC4BC com Resource Manager Smart Contracts — base de design do
+               nosso chaincode 2PC. DOI emitido em 2023 (online-first); o
+               fascículo final é 4(2), 2025}
+}
+
+@inproceedings{ezhilchelvan2018nonblocking,
+  author    = {Ezhilchelvan, Paul and Aldweesh, Amjad and van Moorsel, Aad},
+  title     = {Non-Blocking Two Phase Commit Using Blockchain},
+  booktitle = {Proceedings of the 1st Workshop on Cryptocurrencies and
+               Blockchains for Distributed Systems (CryBlock)},
+  pages     = {36--41},
+  year      = {2018},
+  doi       = {10.1145/3211933.3211940}
+}
+
+@article{tao2024atomicity,
+  author  = {Tao, Yuechen and Li, Bo and Li, Baochun},
+  title   = {On Atomicity and Confidentiality Across Blockchains Under Failures},
+  journal = {IEEE Transactions on Knowledge and Data Engineering},
+  volume  = {36},
+  number  = {2},
+  pages   = {766--780},
+  year    = {2024},
+  doi     = {10.1109/TKDE.2023.3255842},
+  note    = {Atomicidade entre cadeias permissionadas sob falhas (protocolo
+             Unity, 4PC). Trabalho mais próximo em espírito — diferenciar com
+             cuidado na Related Work}
+}
+
+@inproceedings{cai2024avalon,
+  author    = {Cai, Yuandi and Cheng, Ru and Zhou, Yifan and Zhang, Shijie and
+               Xiao, Jiang and Jin, Hai},
+  title     = {Enabling Complete Atomicity for Cross-Chain Applications Through
+               Layered State Commitments},
+  booktitle = {2024 43rd International Symposium on Reliable Distributed
+               Systems (SRDS)},
+  pages     = {248--259},
+  year      = {2024},
+  doi       = {10.1109/SRDS64841.2024.00032},
+  note      = {Avalon. Critica o custo de serialização do 2PC — hipótese que
+               nossos dados de latência podem testar}
+}
+
+@article{robinson2022atomic,
+  author    = {Robinson, Peter and Ramesh, Raghavendra and Johnson, Sandra},
+  title     = {Atomic Crosschain Transactions for Ethereum Private Sidechains},
+  journal   = {Blockchain: Research and Applications},
+  volume    = {3},
+  number    = {1},
+  articleno = {100030},
+  year      = {2022},
+  doi       = {10.1016/j.bcra.2021.100030},
+  note    = {2PC em sidechains permissionadas com medições reais — template
+             metodológico}
+}
+
+@inproceedings{engel2021failure,
+  author    = {Engel, Daniel and Herlihy, Maurice and Xue, Yingjie},
+  title     = {Failure is (literally) an Option: Atomic Commitment vs
+               Optionality in Decentralized Finance},
+  booktitle = {Stabilization, Safety, and Security of Distributed Systems
+               (SSS)},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {13046},
+  year      = {2021},
+  doi       = {10.1007/978-3-030-91081-5_5},
+  eprint    = {2109.12167},
+  note      = {Percorre a evolução do 2PC ao HTLC ANALITICAMENTE. Predecessor
+               conceitual direto — nossa contribuição é a medição}
+}
+
+
+% =====================================================================
+% 4. SURVEYS DE INTEROPERABILIDADE
+% =====================================================================
+
+@article{belchior2021survey,
+  author  = {Belchior, Rafael and Vasconcelos, Andr{\'e} and Guerreiro, S{\'e}rgio
+             and Correia, Miguel},
+  title   = {A Survey on Blockchain Interoperability: Past, Present, and Future
+             Trends},
+  journal = {ACM Computing Surveys},
+  volume  = {54},
+  number  = {8},
+  articleno = {168},
+  year    = {2021},
+  doi     = {10.1145/3471140},
+  eprint  = {2005.14282},
+  note    = {Taxonomia padrão da área}
+}
+
+@inproceedings{zamyatin2021sok,
+  author    = {Zamyatin, Alexei and Al-Bassam, Mustafa and Zindros, Dionysis and
+               Kokoris-Kogias, Eleftherios and Moreno-Sanchez, Pedro and
+               Kiayias, Aggelos and Knottenbelt, William J.},
+  title     = {{SoK}: Communication Across Distributed Ledgers},
+  booktitle = {Financial Cryptography and Data Security (FC)},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {12675},
+  pages     = {3--36},
+  year      = {2021},
+  doi       = {10.1007/978-3-662-64331-0_1},
+  note      = {Impossibilidade de comunicação cross-chain sem terceiro
+               confiável — fundamento teórico do nosso enquadramento}
+}
+
+@article{belchior2023need,
+  author  = {Belchior, Rafael and Riley, Luke and Hardjono, Thomas and
+             Vasconcelos, Andr{\'e} and Correia, Miguel},
+  title   = {Do You Need a Distributed Ledger Technology Interoperability
+             Solution?},
+  journal = {ACM Distributed Ledger Technologies: Research and Practice},
+  volume  = {2},
+  number  = {1},
+  year    = {2023},
+  doi     = {10.1145/3564532},
+  note    = {Framework de decisão — base da nossa seção de discussão prática}
+}
+
+@article{wang2023exploring,
+  author  = {Wang, Gang and Wang, Qin and Chen, Shiping},
+  title   = {Exploring Blockchains Interoperability: A Systematic Survey},
+  journal = {ACM Computing Surveys},
+  volume  = {55},
+  number  = {13s},
+  pages   = {1--38},
+  year    = {2023},
+  doi     = {10.1145/3582882}
+}
+
+@article{alsoudi2025permissioned,
+  author  = {Alsoudi, Dua and Ang, Tan Fong and Ku, Chin Soon and
+             Okmi, Mohammed and Luo, Yu and Chen, Jiahui and
+             Bhatti, Uzair Aslam and Por, Lip Yee},
+  title   = {Security and Privacy in Permissioned Blockchain Interoperability:
+             A Systematic Review},
+  journal = {Computers, Materials \& Continua},
+  volume  = {85},
+  number  = {2},
+  pages   = {2579--2624},
+  year    = {2025},
+  doi     = {10.32604/cmc.2025.070413},
+  note    = {Revisão PRISMA de 56 estudos (2020--2025). Relata que propriedades
+             ACID e resiliência cross-chain são subexploradas e que 93\% dos
+             estudos examinam menos de quatro propriedades — evidência externa
+             da lacuna}
+}
+
+
+% =====================================================================
+% 5. PADRÕES E IMPLEMENTAÇÕES
+% =====================================================================
+
+@misc{ietf2026satp,
+  author       = {Hargreaves, Martin and Hardjono, Thomas and Belchior, Rafael
+                  and Ramakrishna, Venkatraman and Chiriac, Alexandru},
+  title        = {Secure Asset Transfer Protocol ({SATP}) Core},
+  howpublished = {Internet-Draft draft-ietf-satp-core-16, IETF},
+  month        = aug,
+  year         = {2026},
+  url          = {https://datatracker.ietf.org/doc/draft-ietf-satp-core/},
+  note         = {Em WG Last Call. Stage 3 implementa literalmente um 2PC entre
+                  gateways. Prova que o braço 2PC não é um espantalho: é a
+                  direção do padrão}
+}
+
+@misc{interledger2017htla,
+  author       = {{Interledger Foundation}},
+  title        = {Interledger {RFC} 0022: Hashed-Timelock Agreements ({HTLAs})},
+  year         = {2017},
+  url          = {https://interledger.org/developers/rfcs/hashed-timelock-agreements/},
+  note         = {Generaliza HTLC para ledgers sem suporte nativo a hashlock —
+                  exatamente a situação do Fabric}
+}
+
+@misc{cacti2026,
+  author       = {{Hyperledger Foundation}},
+  title        = {Hyperledger Cacti (incorporando Weaver)},
+  year         = {2026},
+  url          = {https://github.com/hyperledger-cacti/cacti},
+  note         = {Origem do braço HTLC: biblioteca assetexchange, chaincode
+                  simpleasset e testbed de duas redes Fabric 2.5.16}
+}
+
+@inproceedings{zamyatin2019xclaim,
+  author    = {Zamyatin, Alexei and Harz, Dominik and Lind, Joshua and
+               Panayiotou, Panayiotis and Gervais, Arthur and
+               Knottenbelt, William},
+  title     = {{XCLAIM}: Trustless, Interoperable, Cryptocurrency-Backed Assets},
+  booktitle = {2019 IEEE Symposium on Security and Privacy (SP)},
+  pages     = {193--210},
+  year      = {2019},
+  doi       = {10.1109/SP.2019.00085},
+  note      = {Alternativa por colateral — mostra que o espaço de projeto não é
+               binário entre HTLC e 2PC}
+}
+
+
+% =====================================================================
+% 6. PLATAFORMA, BENCHMARKING E INJEÇÃO DE FALHAS
+% =====================================================================
+
+@inproceedings{androulaki2018fabric,
+  author    = {Androulaki, Elli and Barger, Artem and Bortnikov, Vita and
+               Cachin, Christian and Christidis, Konstantinos and
+               De Caro, Angelo and Enyeart, David and Ferris, Christopher and
+               Laventman, Gennady and Manevich, Yacov and others},
+  title     = {Hyperledger Fabric: A Distributed Operating System for
+               Permissioned Blockchains},
+  booktitle = {Proceedings of the Thirteenth EuroSys Conference},
+  articleno = {30},
+  year      = {2018},
+  doi       = {10.1145/3190508.3190538},
+  note      = {Arquitetura execute-order-validate — explica os conflitos MVCC e
+               a latência de endosso que observamos}
+}
+
+@inproceedings{thakkar2018performance,
+  author    = {Thakkar, Parth and Nathan, Senthil and Viswanathan, Balaji},
+  title     = {Performance Benchmarking and Optimizing Hyperledger Fabric
+               Blockchain Platform},
+  booktitle = {2018 IEEE 26th International Symposium on Modeling, Analysis,
+               and Simulation of Computer and Telecommunication Systems
+               (MASCOTS)},
+  pages     = {264--276},
+  year      = {2018},
+  doi       = {10.1109/MASCOTS.2018.00034},
+  eprint    = {1805.11390},
+  note      = {Metodologia canônica de caracterização de desempenho no Fabric —
+               template da nossa seção experimental}
+}
+
+@inproceedings{gorenflo2019fastfabric,
+  author    = {Gorenflo, Christian and Lee, Stephen and Golab, Lukasz and
+               Keshav, Srinivasan},
+  title     = {{FastFabric}: Scaling Hyperledger Fabric to 20,000 Transactions
+               per Second},
+  booktitle = {2019 IEEE International Conference on Blockchain and
+               Cryptocurrency (ICBC)},
+  pages     = {455--463},
+  year      = {2019},
+  doi       = {10.1109/BLOC.2019.8751452},
+  eprint    = {1901.00910},
+  note      = {Envelope de throughput da plataforma — permite argumentar que
+               nossos números são limitados pelo protocolo, não pela plataforma}
+}
+
+@inproceedings{dinh2017blockbench,
+  author    = {Dinh, Tien Tuan Anh and Wang, Ji and Chen, Gang and Liu, Rui and
+               Ooi, Beng Chin and Tan, Kian-Lee},
+  title     = {{BLOCKBENCH}: A Framework for Analyzing Private Blockchains},
+  booktitle = {Proceedings of the 2017 ACM International Conference on
+               Management of Data (SIGMOD)},
+  pages     = {1085--1100},
+  year      = {2017},
+  doi       = {10.1145/3035918.3064033},
+  eprint    = {1703.04057}
+}
+
+@techreport{hyperledger2018metrics,
+  author      = {{Hyperledger Performance and Scale Working Group}},
+  title       = {Hyperledger Blockchain Performance Metrics},
+  institution = {Hyperledger Foundation},
+  year        = {2018},
+  url         = {https://www.lfdecentralizedtrust.org/learn/publications/blockchain-performance-metrics},
+  note        = {Definições defensáveis de throughput e latência; exige
+                 divulgação do ambiente — base da nossa Threats to Validity}
+}
+
+@article{hajdu2020fault,
+  author  = {Hajdu, {\'A}kos and Ivaki, Naghmeh and Kocsis, Imre and
+             Klenik, Attila and G{\"o}nczy, L{\'a}szl{\'o} and
+             Laranjeiro, Nuno and Madeira, Henrique and Pataricza, Andr{\'a}s},
+  title   = {Using Fault Injection to Assess Blockchain Systems in Presence of
+             Faulty Smart Contracts},
+  journal = {IEEE Access},
+  volume  = {8},
+  pages   = {190760--190783},
+  year    = {2020},
+  doi     = {10.1109/ACCESS.2020.3032239},
+  eprint  = {2006.11597},
+  note    = {Injeção de falhas por software aplicada ao Fabric, usando o
+             read/write set para verificação — âncora metodológica}
+}
+
+@inproceedings{sondhi2021chaos,
+  author    = {Sondhi, Shiv and Saad, Sherif and Shi, Kevin and
+               Mamun, Mohammad and Traore, Issa},
+  title     = {Chaos Engineering for Understanding Consensus Algorithms
+               Performance in Permissioned Blockchains},
+  booktitle = {2021 IEEE Intl Conf on Dependable, Autonomic and Secure
+               Computing (DASC/PiCom/CBDCom/CyberSciTech)},
+  pages     = {51--59},
+  year      = {2021},
+  doi       = {10.1109/DASC-PICom-CBDCom-CyberSciTech52372.2021.00023},
+  eprint    = {2108.08441},
+  note      = {Taxonomia de falhas injetadas em Fabric: atraso, perda de
+               pacotes, corrupção e pausa de nós (equivalente a crash)}
+}
+
+@article{zhang2023chaoseth,
+  author  = {Zhang, Long and Ampel, Benjamin and Monperrus, Martin},
+  title   = {Chaos Engineering of Ethereum Blockchain Clients},
+  journal = {ACM Distributed Ledger Technologies: Research and Practice},
+  volume  = {2},
+  number  = {3},
+  year    = {2023},
+  doi     = {10.1145/3611649},
+  eprint  = {2111.00221}
+}
+
+@article{melo2022performance,
+  author  = {Melo, Carlos and Oliveira, Felipe and Dantas, Jamilson and
+             Araujo, Jean and Pereira, Paulo and Maciel, Ronierison and
+             Maciel, Paulo},
+  title   = {Performance and Availability Evaluation of the Blockchain Platform
+             Hyperledger Fabric},
+  journal = {The Journal of Supercomputing},
+  volume  = {78},
+  number  = {10},
+  pages   = {12505--12527},
+  year    = {2022},
+  doi     = {10.1007/s11227-022-04361-2},
+  note    = {Combina desempenho e disponibilidade sob falhas no Fabric — irmão
+             metodológico mais próximo}
+}
+
+@article{ke2023modeling,
+  author  = {Ke, Zuqiang and Park, Nohpill},
+  title   = {Performance Modeling and Analysis of Hyperledger Fabric},
+  journal = {Cluster Computing},
+  volume  = {26},
+  number  = {5},
+  pages   = {2681--2699},
+  year    = {2023},
+  doi     = {10.1007/s10586-022-03800-2}
+}
+
+@inproceedings{yan2025empirical,
+  author    = {Yan, Kailun and Lu, Bo and Agrawal, Pranav and Li, Jiasun and
+               Diao, Wenrui and Zhang, Xiaokuan},
+  title     = {An Empirical Study on Cross-Chain Transactions: Costs,
+               Inconsistencies, and Activities},
+  booktitle = {Proceedings of the 20th ACM Asia Conference on Computer and
+               Communications Security (ASIA CCS)},
+  pages     = {939--954},
+  year      = {2025},
+  doi       = {10.1145/3708821.3733878},
+  note      = {Empírico, mas mede pontes públicas em produção — objeto
+               diferente do nosso experimento controlado}
+}
