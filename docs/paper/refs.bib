@@ -10,6 +10,24 @@
 %   6. Plataforma, benchmarking e injeção de falhas
 %
 % Convenção: chave = primeiroautor+ano+palavra.
+%
+% PROCEDÊNCIA (31.08.2026): todas as 42 entradas com DOI foram conferidas
+% contra a API do Crossref; as de arXiv contra a API do arXiv; o draft do SATP
+% contra o IETF Datatracker. As sem DOI (livro do Bernstein, fórum do Nolan,
+% white paper do Hyperledger, repositório do Cacti) foram conferidas na fonte.
+% Erros corrigidos nessa passagem, todos por dados iniciais incorretos:
+%   - Lu/Jajoo: "Hongbo"/"Anup" -> Huaixi/Akshay (e o nome do workshop)
+%   - ChaosETH: "Ampel" nao existe -> Ron, Javier e Baudry, Benoit
+%   - Fault injection IEEE Access: nao e Yamashita nem Sousa -> Hajdu et al.
+%   - CryBlock'18: nao e Zhang -> Ezhilchelvan, Aldweesh, van Moorsel
+%   - Tao et al. TKDE: DOI ...3255299 -> ...3255842
+%   - Cluster Computing: nao e Wang et al. -> Ke & Park; paginas corrigidas
+%   - Falazi (2PC4BC): ano 2023 -> 2025 (fasciculo 4(2))
+%   - Avalon SRDS: DOI ...00031 -> ...00032; nomes proprios corrigidos
+%   - Robinson: 3 autores (nao 4); fasciculo 3(1), 2022
+%   - Exploring Blockchains Interoperability: -> Wang, Wang & Chen
+% Ao acrescentar entradas novas, confira antes de commitar:
+%   curl -s https://api.crossref.org/works/<DOI> | jq '.message.author'
 % =====================================================================
 
 
@@ -179,6 +197,7 @@
   title     = {Atomic Cross-Chain Exchanges of Shared Assets},
   booktitle = {Proceedings of the 4th ACM Conference on Advances in Financial
                Technologies (AFT)},
+  pages     = {148--160},
   year      = {2022},
   doi       = {10.1145/3558535.3559786},
   eprint    = {2202.12855},
@@ -206,17 +225,17 @@
 }
 
 @inproceedings{lu2024twophase,
-  author    = {Lu, Hongbo and Jajoo, Anup and Namjoshi, Kedar S.},
+  author    = {Lu, Huaixi and Jajoo, Akshay and Namjoshi, Kedar S.},
   title     = {A Two-Phase Protocol for Atomic Multi-Chain Transactions},
-  booktitle = {Proceedings of the 5th ACM International Workshop on
-               Distributed Infrastructure for the Common Good (DIN)},
+  booktitle = {Proceedings of the ACM CoNEXT-2024 Workshop on the
+               Decentralization of the Internet (DIN)},
   pages     = {21--27},
   year      = {2024},
   doi       = {10.1145/3694809.3700742}
 }
 
 @misc{lu2024atomicity,
-  author = {Lu, Hongbo and Jajoo, Anup and Namjoshi, Kedar S.},
+  author = {Lu, Huaixi and Jajoo, Akshay and Namjoshi, Kedar S.},
   title  = {Atomicity and Abstraction for Cross-Blockchain Interactions},
   year   = {2024},
   eprint = {2403.07248},
@@ -293,12 +312,13 @@
 
 @inproceedings{engel2021failure,
   author    = {Engel, Daniel and Herlihy, Maurice and Xue, Yingjie},
-  title     = {Failure is (literally) an Option: Atomic Commitment vs
-               Optionality in Decentralized Finance},
+  title     = {Invited Paper: Failure is (literally) an Option: Atomic
+               Commitment vs Optionality in Decentralized Finance},
   booktitle = {Stabilization, Safety, and Security of Distributed Systems
                (SSS)},
   series    = {Lecture Notes in Computer Science},
   volume    = {13046},
+  pages     = {66--77},
   year      = {2021},
   doi       = {10.1007/978-3-030-91081-5_5},
   eprint    = {2109.12167},
@@ -320,6 +340,7 @@
   volume  = {54},
   number  = {8},
   articleno = {168},
+  pages   = {1--41},
   year    = {2021},
   doi     = {10.1145/3471140},
   eprint  = {2005.14282},
@@ -346,9 +367,10 @@
              Vasconcelos, Andr{\'e} and Correia, Miguel},
   title   = {Do You Need a Distributed Ledger Technology Interoperability
              Solution?},
-  journal = {ACM Distributed Ledger Technologies: Research and Practice},
+  journal = {Distributed Ledger Technologies: Research and Practice},
   volume  = {2},
   number  = {1},
+  pages   = {1--37},
   year    = {2023},
   doi     = {10.1145/3564532},
   note    = {Framework de decisão — base da nossa seção de discussão prática}
@@ -407,7 +429,8 @@
   year         = {2017},
   url          = {https://interledger.org/developers/rfcs/hashed-timelock-agreements/},
   note         = {Generaliza HTLC para ledgers sem suporte nativo a hashlock —
-                  exatamente a situação do Fabric}
+                  exatamente a situação do Fabric. Documento vivo: publicado em
+                  24.07.2017, última revisão em 16.03.2026}
 }
 
 @misc{cacti2026,
@@ -441,11 +464,16 @@
   author    = {Androulaki, Elli and Barger, Artem and Bortnikov, Vita and
                Cachin, Christian and Christidis, Konstantinos and
                De Caro, Angelo and Enyeart, David and Ferris, Christopher and
-               Laventman, Gennady and Manevich, Yacov and others},
+               Laventman, Gennady and Manevich, Yacov and
+               Muralidharan, Srinivasan and Murthy, Chet and Nguyen, Binh and
+               Sethi, Manish and Singh, Gari and Smith, Keith and
+               Sorniotti, Alessandro and Stathakopoulou, Chrysoula and
+               Vukoli{\'c}, Marko and Cocco, Sharon Weed and Yellick, Jason},
   title     = {Hyperledger Fabric: A Distributed Operating System for
                Permissioned Blockchains},
   booktitle = {Proceedings of the Thirteenth EuroSys Conference},
   articleno = {30},
+  pages     = {1--15},
   year      = {2018},
   doi       = {10.1145/3190508.3190538},
   note      = {Arquitetura execute-order-validate — explica os conflitos MVCC e
@@ -536,11 +564,13 @@
 }
 
 @article{zhang2023chaoseth,
-  author  = {Zhang, Long and Ampel, Benjamin and Monperrus, Martin},
+  author  = {Zhang, Long and Ron, Javier and Baudry, Benoit and
+             Monperrus, Martin},
   title   = {Chaos Engineering of Ethereum Blockchain Clients},
-  journal = {ACM Distributed Ledger Technologies: Research and Practice},
+  journal = {Distributed Ledger Technologies: Research and Practice},
   volume  = {2},
   number  = {3},
+  pages   = {1--18},
   year    = {2023},
   doi     = {10.1145/3611649},
   eprint  = {2111.00221}
