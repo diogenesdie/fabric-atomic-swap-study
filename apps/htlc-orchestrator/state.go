@@ -7,6 +7,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	am "github.com/hyperledger-cacti/cacti/weaver/sdks/fabric/go-sdk/v3/asset-manager"
 	"github.com/pucrs-ppgcc/htlc-vs-2pc/internal/ledger"
 	"github.com/pucrs-ppgcc/htlc-vs-2pc/internal/run"
 	"regexp"
@@ -72,18 +73,22 @@ func (s *Swap) ReadState() (LedgerState, error) {
 		break
 	}
 	if len(readErrs) == len(candidates) {
-		return st, fmt.Errorf(
-			"nenhuma identidade conseguiu ler %s:%s — %s",
-			s.cfg.BondType, s.cfg.BondID, strings.Join(readErrs, " | "))
+		// Um bond sob lock HTLC pode ficar ilegível para as duas partes. Isso é
+		// estado válido do protocolo, não falha de leitura: registramos como
+		// TRAVADO e seguimos, senão perderíamos justamente as execuções mais
+		// interessantes.
+		if s.bondIsLocked() {
+			st.BondOwner = "TRAVADO"
+			st.BondLocked = true
+		} else {
+			return st, fmt.Errorf(
+				"nenhuma identidade conseguiu ler %s:%s — %s",
+				s.cfg.BondType, s.cfg.BondID, strings.Join(readErrs, " | "))
+		}
 	}
 
-	// --- rede 1: há lock ativo sobre o bond? ---
-	// IsAssetLockedInHTLC devolve erro quando não há lock, o que aqui é
-	// informação e não falha.
-	if locked, err := s.n1Bob.Contract.EvaluateTransaction(
-		"IsAssetLocked", s.cfg.BondType, s.cfg.BondID); err == nil {
-		st.BondLocked = strings.Contains(string(locked), "true")
-	}
+	// --- rede 1: há lock HTLC ativo sobre o bond? ---
+	st.BondLocked = s.bondIsLocked()
 
 	// --- rede 2: saldos de token ---
 	for _, sess := range []*ledger.Session{s.n2Alice, s.n2Bob} {
@@ -98,6 +103,22 @@ func (s *Swap) ReadState() (LedgerState, error) {
 	}
 
 	return st, nil
+}
+
+// bondIsLocked consulta se há lock HTLC ativo sobre o bond.
+//
+// Precisa passar pelo SDK: o IsAssetLocked do simpleasset recebe um
+// AssetExchangeAgreement em protobuf/base64, não (tipo, id). Chamá-lo com dois
+// strings falha silenciosamente e faz o estado "travado" nunca ser detectado —
+// era um bug latente que escondia justamente os desfechos BLOCKED.
+func (s *Swap) bondIsLocked() bool {
+	res, err := am.IsAssetLockedInHTLC(
+		s.n1Bob.Contract,
+		s.cfg.BondType, s.cfg.BondID,
+		s.n1Bob.CertB64, s.n1Alice.CertB64,
+	)
+	// Sem lock ativo o chaincode responde com erro; aqui isso é informação.
+	return err == nil && strings.Contains(res, "true")
 }
 
 // nameOfCert resolve um certificado base64 para o nome do participante,

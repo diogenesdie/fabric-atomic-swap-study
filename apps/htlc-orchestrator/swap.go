@@ -134,8 +134,15 @@ func (s *Swap) TokenLockID() string { return s.tokenLockID }
 // Run executa o protocolo até o fim ou até o ponto de crash configurado.
 func (s *Swap) Run() (run.Summary, error) {
 	cfg := s.cfg
+
+	// Cada parte fixa o PRÓPRIO prazo no instante em que age — não no início da
+	// execução. É como o protocolo funciona de fato, e a diferença é
+	// substantiva: o tempo decorrido entre os dois locks come a margem de
+	// segurança. Alice trava em A com prazo A+T1; bob trava em B com prazo
+	// B+T2. A proteção de bob exige B+T2 < A+T1, ou seja T2 < T1 - (B-A).
+	// Sob atraso de rede, (B-A) cresce e pode inverter a ordem dos prazos —
+	// que é precisamente o modo de falha que o cenário H3 investiga.
 	t1 := uint64(time.Now().Add(cfg.T1).Unix())
-	t2 := uint64(time.Now().Add(cfg.T2).Unix())
 
 	// ---- passo 1: alice trava o bond na rede 1 -----------------------
 	out, err := s.rec.Time(1, "lock-bond", "network1", func() (string, error) {
@@ -178,6 +185,24 @@ func (s *Swap) Run() (run.Summary, error) {
 	}
 
 	// ---- passo 3: bob trava os tokens na rede 2 ----------------------
+	//
+	// Bob calcula o prazo dele agora, e confere se ainda sobra margem. Um
+	// cliente HTLC correto RECUSA travar quando o próprio prazo não caberia
+	// antes do de alice: travar nessa situação é entregar o ativo a quem pode
+	// resgatar dos dois lados.
+	t2 := uint64(time.Now().Add(cfg.T2).Unix())
+	margin := int64(t1) - int64(t2)
+	s.rec.Note(3, "safety-margin", "network2",
+		fmt.Sprintf("T1-T2 restante: %ds", margin))
+
+	if margin <= 0 {
+		s.rec.Skip(3, "lock-tokens", "network2",
+			fmt.Sprintf("margem esgotada (%ds): bob recusa travar", margin))
+		return s.summarize(run.OutcomeAbortedBoth,
+			fmt.Sprintf("bob recusou travar: o atraso consumiu a margem entre os "+
+				"prazos (%ds). O bond de alice fica preso até T1", margin)), nil
+	}
+
 	lockID, err := s.rec.Time(3, "lock-tokens", "network2", func() (string, error) {
 		return am.CreateFungibleHTLC(
 			s.n2Bob.Contract,
@@ -343,4 +368,27 @@ func (s *Swap) summarize(o run.Outcome, detail string) run.Summary {
 
 func hashOf(secret string) string {
 	return am.GenerateSHA256HashInBase64Form(secret)
+}
+
+// SeedBond cria um bond pertencente a alice.
+//
+// Existe para o harness: cada execução precisa de um ativo virgem, e recriar
+// as duas redes entre execuções levaria ~3 minutos.
+//
+// Dois detalhes que o simpleasset impõe:
+//   - o campo owner é gravado LITERALMENTE, e todo o resto do chaincode o trata
+//     como certificado. Passar a string "alice" cria um ativo que ninguém
+//     consegue ler, nem alice.
+//   - a data de vencimento precisa estar no futuro e no formato RFC822.
+func (s *Swap) SeedBond(id string) error {
+	maturity := time.Now().AddDate(5, 0, 0).Format(time.RFC822)
+	_, err := s.n1Alice.Contract.SubmitTransaction(
+		"CreateAsset", s.cfg.BondType, id, s.n1Alice.CertB64, "treasury", "500", maturity)
+	if err != nil {
+		if strings.Contains(err.Error(), "already exists") {
+			return nil // idempotente: reexecutar o runner não deve falhar
+		}
+		return fmt.Errorf("não foi possível criar %s:%s: %w", s.cfg.BondType, id, err)
+	}
+	return nil
 }

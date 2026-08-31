@@ -16,8 +16,10 @@
 # Chaincode empacotado
 *.tar.gz
 
-# Resultados brutos dos experimentos (os agregados em results/aggregated/ são versionados)
+# Resultados brutos dos experimentos. O agregado (aggregated.csv) é versionado;
+# os CSVs e logs por execução, não — são reproduzíveis pelo runner.
 /experiments/results/raw/
+/experiments/results/.run-counter
 /experiments/results/**/*.log
 
 # Write-ahead log do coordenador (estado de execução, não código)

@@ -1,0 +1,11 @@
+# Imagem auxiliar para injetar atraso de rede nos containers do Fabric.
+#
+# As imagens do Hyperledger Fabric não trazem o iproute2, então não dá para
+# rodar `tc` dentro delas. Este container é executado com
+# --net=container:<alvo> --cap-add=NET_ADMIN, o que o coloca no MESMO namespace
+# de rede do peer: o `tc` aqui altera a interface do peer.
+#
+# Construída uma vez e mantida em cache local; ver netem.sh.
+FROM alpine:3.20
+RUN apk add --no-cache iproute2
+ENTRYPOINT ["tc"]

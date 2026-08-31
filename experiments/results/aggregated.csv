@@ -1,0 +1,23 @@
+run_id,protocol,scenario,repetition,outcome,expected,matched,lock_duration_ms,transactions,protocol_latency_ms,detail
+B1-r0016,htlc,B1,1,COMMITTED_BOTH,COMMITTED_BOTH,sim,6117,4,8137,bond transferido e tokens movidos
+B1-r0017,htlc,B1,2,COMMITTED_BOTH,COMMITTED_BOTH,sim,6115,4,8137,bond transferido e tokens movidos
+B2-r0018,2pc,B2,1,COMMITTED_BOTH,COMMITTED_BOTH,sim,2041,4,4070,os dois ativos trocaram de dono
+B2-r0019,2pc,B2,2,COMMITTED_BOTH,COMMITTED_BOTH,sim,2037,4,4057,os dois ativos trocaram de dono
+B3-r0020,2pc,B3,1,COMMITTED_BOTH,COMMITTED_BOTH,sim,4060,4,8109,os dois ativos trocaram de dono
+B3-r0021,2pc,B3,2,COMMITTED_BOTH,COMMITTED_BOTH,sim,4080,4,8131,os dois ativos trocaram de dono
+H1-r0022,htlc,H1,1,ABORTED_BOTH,ABORTED_BOTH,sim,30024,2,32042,nenhum lado efetivou; nada permanece travado
+H1-r0023,htlc,H1,2,ABORTED_BOTH,ABORTED_BOTH,sim,30042,2,32071,nenhum lado efetivou; nada permanece travado
+H2-r0024,htlc,H2,1,VIOLATED,VIOLATED,sim,34123,4,36148,tokens se moveram mas o bond não foi transferido
+H2-r0025,htlc,H2,2,VIOLATED,VIOLATED,sim,34122,4,36147,tokens se moveram mas o bond não foi transferido
+H3-r0026,htlc,H3,1,ABORTED_BOTH,ABORTED_BOTH,sim,35058,2,45676,nenhum lado efetivou; nada permanece travado
+H3-r0027,htlc,H3,2,ABORTED_BOTH,ABORTED_BOTH,sim,35057,2,44927,nenhum lado efetivou; nada permanece travado
+T1-r0028,2pc,T1,1,ABORTED_BOTH,ABORTED_BOTH,sim,2033,2,4065,nenhum lado efetivou; nada em custódia
+T1-r0029,2pc,T1,2,ABORTED_BOTH,ABORTED_BOTH,sim,2028,2,4056,nenhum lado efetivou; nada em custódia
+T2-r0030,2pc,T2,1,BLOCKED,BLOCKED,sim,26,2,2039,nenhum lado efetivou e há ativo preso em custódia ([rede 1 rede 2])
+T2-r0031,2pc,T2,2,BLOCKED,BLOCKED,sim,28,2,2042,nenhum lado efetivou e há ativo preso em custódia ([rede 1 rede 2])
+T2r-r0032,2pc,T2r,1,COMMITTED_BOTH,COMMITTED_BOTH,sim,24767,2,2031,os dois ativos trocaram de dono
+T2r-r0033,2pc,T2r,2,COMMITTED_BOTH,COMMITTED_BOTH,sim,24522,2,2021,os dois ativos trocaram de dono
+T3-r0034,2pc,T3,1,COMMITTED_BOTH,COMMITTED_BOTH,sim,6859,4,19358,os dois ativos trocaram de dono
+T3-r0035,2pc,T3,2,COMMITTED_BOTH,COMMITTED_BOTH,sim,6864,4,19353,os dois ativos trocaram de dono
+T4-r0036,2pc,T4,1,VIOLATED,VIOLATED,sim,30803,1,2026,só o ativo da rede 1 trocou de dono
+T4-r0037,2pc,T4,2,VIOLATED,VIOLATED,sim,30792,1,2039,só o ativo da rede 1 trocou de dono

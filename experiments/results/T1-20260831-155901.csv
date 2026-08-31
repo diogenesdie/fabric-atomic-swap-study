@@ -1,6 +1,0 @@
-run_id,protocol,scenario,step,label,network,t_start_ms,duration_ms,result,outcome,lock_duration_ms,transactions,detail
-T1-20260831-155901,2PC,T1,1,prepare-n1,network1,60,2025,OK,,,,
-T1-20260831-155901,2PC,T1,1,prepare-n2,network2,60,5,FALHOU,,,,Failed to submit: Transaction processing for endorser [localhost:9051]: Chaincode status Code: (500) UNKNOWN. Description: o ativo w23 já está em custódia da transação tx-holder
-T1-20260831-155901,2PC,T1,3,persist-decision,coordinator,2085,9,OK,,,,
-T1-20260831-155901,2PC,T1,4,abort-n1,network1,2094,2021,OK,,,,
-T1-20260831-155901,2PC,T1,total,end-to-end,both,0,4132,OK,ABORTED_BOTH,2030,2,nenhum lado efetivou; nada em custódia

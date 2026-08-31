@@ -47,6 +47,8 @@ func main() {
 		reclaim   = flag.Bool("reclaim", false,
 			"após a interrupção, esperar a expiração e exercer o resgate por prazo")
 		stateOnly = flag.Bool("state-only", false, "apenas imprimir o estado dos ledgers")
+		seed      = flag.String("seed", "",
+			"criar um bond de alice com este id e sair (para o runner usar um ativo virgem por execução)")
 		runID     = flag.String("run-id", "", "identificador da execução (padrão: timestamp)")
 		outDir    = flag.String("out", "", "diretório dos CSVs (padrão: experiments/results)")
 		cfgPath   = flag.String("config", "", "config.json (padrão: o da go-cli)")
@@ -113,6 +115,15 @@ func main() {
 	}
 	defer swap.Close()
 
+	// ---- criação de ativo --------------------------------------------
+	if *seed != "" {
+		if err := swap.SeedBond(*seed); err != nil {
+			fatal(err)
+		}
+		fmt.Printf("  ✓ rede 1: %s:%s criado para alice\n", sc.BondType, *seed)
+		return
+	}
+
 	// ---- modo somente leitura ----------------------------------------
 	if *stateOnly {
 		st, err := swap.ReadState()
@@ -147,20 +158,32 @@ func main() {
 	printSteps(rec)
 
 	// ---- resgate por expiração (o watchdog da vítima) ----------------
-	if *reclaim && cp != CrashNone {
+	//
+	// Vale para qualquer execução interrompida, não só as com crash injetado:
+	// bob também pode recusar travar por falta de margem (cenário H3), e nesse
+	// caso o bond de alice fica igualmente preso à espera do prazo.
+	if *reclaim {
 		exerciseReclaim(swap, rec, sc, cp)
 	}
 
 	// ---- desfecho observado ------------------------------------------
-	after, err := swap.ReadState()
-	if err != nil {
-		fatal(fmt.Errorf("não foi possível ler o estado final: %w", err))
+	// A leitura final pode falhar por timeout quando há atraso de rede
+	// injetado — e perder a execução inteira porque a OBSERVAÇÃO falhou seria
+	// pior do que registrá-la como inconclusiva. Gravamos o CSV de qualquer
+	// forma, com o desfecho marcado como ERROR.
+	after, readErr := swap.ReadState()
+	var observed run.Outcome
+	var detail string
+	if readErr != nil {
+		fmt.Printf("\n  ! estado final ilegível: %v\n", readErr)
+		observed = run.OutcomeError
+		detail = "estado final ilegível (provável timeout sob atraso injetado)"
+	} else {
+		fmt.Printf("\n  estado final   : %s\n", after)
+		// Montado depois de eventuais resgates, para que o tempo de bloqueio e
+		// a contagem de escritas incluam o caminho de devolução.
+		observed, detail = Classify(before, after, sc.TokenQty)
 	}
-	fmt.Printf("\n  estado final   : %s\n", after)
-
-	// O resumo é montado agora, depois de eventuais resgates, para que o tempo
-	// de bloqueio e a contagem de escritas incluam o caminho de devolução.
-	observed, detail := Classify(before, after, sc.TokenQty)
 	summary := swap.Summarize(observed, detail)
 
 	csvPath := filepath.Join(*outDir, *runID+".csv")
@@ -188,12 +211,12 @@ func exerciseReclaim(swap *Swap, rec *run.Recorder, sc SwapConfig, cp CrashPoint
 	// Quem precisa resgatar, e após qual prazo, depende de onde paramos.
 	var wait time.Duration
 	switch cp {
-	case CrashLock1, CrashClaim1:
-		wait = sc.T1 // alice recupera o bond
 	case CrashLock2:
 		wait = sc.T2 // bob recupera os tokens primeiro (prazo menor)
 	default:
-		return
+		// CrashLock1, CrashClaim1 e também a recusa de bob por falta de margem:
+		// em todos, o que ficou preso foi o bond de alice, sob o prazo T1.
+		wait = sc.T1
 	}
 
 	fmt.Printf("\n  aguardando expiração (%s) para exercer o resgate...\n", wait)
