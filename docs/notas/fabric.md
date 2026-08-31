@@ -105,9 +105,121 @@ exemplo, exigências de versão do Node). Confiar em `go.mod` e `package.json`.
 
 ## Pegadinhas encontradas na prática
 
-> Preencher durante as Etapas 1–4. Cada item: sintoma, causa, solução.
+Todas descobertas no spike da Etapa 1 (31.08.2026) e já tratadas nos scripts.
+Cada item: sintoma, causa, solução.
 
-*(nenhuma registrada ainda — o spike da Etapa 1 é o primeiro contato)*
+### 1. Connection profile YAML não parseia
+
+**Sintoma:** `While parsing config: yaml: line 88: could not find expected ':'`
+
+**Causa:** na seção `certificateAuthorities`, o bloco literal do certificado é
+aberto como item de lista (`- |`) e a primeira linha do PEM recebe 2 espaços de
+indentação a mais que as seguintes. Em YAML a indentação do bloco é definida
+pela primeira linha; as seguintes, menos indentadas, encerram o bloco e passam a
+ser lidas como YAML.
+
+**Solução:** `scripts/fix_connection_profiles.py` normaliza a indentação.
+Não serve trocar para o `connection-org1.json`: ele é sintaticamente válido mas
+**não tem a seção `orderers`** — é um perfil incompleto.
+
+### 2. Registro de usuário falha por falta de registrar
+
+**Sintoma:** `CA registrar not found`
+
+**Causa:** o perfil gerado não traz a entrada `registrar`, que o SDK usa para
+autenticar como admin da CA ao registrar novos usuários.
+
+**Solução:** injetar `registrar: {enrollId: admin, enrollSecret: adminpw}`. A
+identidade de bootstrap vem de `fabric-ca-server start -b admin:adminpw` em
+`docker/docker-compose-ca.yaml`.
+
+### 3. Nome da CA divergente
+
+**Sintoma:** `Error Code: 19 - CA 'ca-org1' does not exist`
+
+**Causa:** o perfil declara `caName: ca-org1`, mas o servidor foi iniciado com
+`FABRIC_CA_SERVER_CA_NAME=ca.org1.<rede>.com`. Confirmável com
+`curl -sk https://localhost:7054/cainfo`.
+
+**Solução:** alinhar `caName` à chave da própria entrada, que já está correta.
+
+### 4. Dados de exemplo com vencimento no passado
+
+**Sintoma:** `maturity date can not be in past` — **e a CLI sai com código 0**,
+fingindo sucesso. Só olhando o log se descobre que nada foi criado.
+
+**Causa:** `data/assets.json` do Weaver tem vencimentos em 2022.
+
+**Solução:** fixtures próprios em `experiments/fixtures/` com data futura, e o
+setup valida as datas antes de usar. **Lição geral: a go-cli engole erros de
+invocação e retorna 0** — sempre inspecionar o log em busca de `Invoke error`.
+
+### 5. `ReadAsset` só responde ao dono
+
+**Sintoma:** `cannot access Bond Asset a03` ao consultar com a identidade que
+acabou de perder o ativo.
+
+**Causa:** o `simpleasset` restringe a leitura ao proprietário. Não existe
+identidade neutra de observação.
+
+**Solução:** para descobrir o dono, tentar cada identidade candidata — quem
+consegue ler é o dono — e confirmar pelo certificado do campo `owner`. É o que
+`bond_owner()` faz em `scripts/04-spike-htlc.sh`.
+
+### 6. Titularidade é certificado, não nome
+
+O campo `owner` de um bond é o **certificado X.509 do dono em base64**, não a
+string `alice`. O nome fica no atributo `hf.EnrollmentID`, embutido pelo Fabric
+CA. `scripts/ledger_state.py` faz a resolução — essencial para classificar
+desfechos no harness.
+
+Tokens são diferentes: `GetMyWallet` devolve `token1="10000"` em claro.
+`GetBalance` exige que o dono já tenha carteira e falha com
+`owner does not have a wallet`.
+
+### 7. `configure asset add` não é idempotente
+
+Cada execução **emite novas unidades** de token. Rodar duas vezes dobra os
+saldos (foi assim que alice apareceu com 20000 em vez de 10000 na primeira
+tentativa). Só executar em estado limpo.
+
+### 8. Verbosidade da CLI
+
+A go-cli despeja stack traces enormes do `fabric-sdk-go` em toda falha. Sempre
+redirecionar para arquivo e filtrar (`grep -oE 'Description: [^\\]*'`), senão o
+sinal desaparece no ruído.
+
+## Latência: dominada pelo corte de bloco
+
+Medição do spike (baseline sem falha, `1-node`, arm64, Docker 7,7 GB):
+
+| Passo | Tipo | Duração |
+|---|---|---|
+| 1 lock-bond | escrita | 2109 ms |
+| 2 verify-bond-lock | leitura | 54 ms |
+| 3 lock-tokens | escrita | 2094 ms |
+| 4 verify-token-lock | leitura | 53 ms |
+| 5 claim-tokens | escrita | 2092 ms |
+| 6 claim-bond | escrita | 2106 ms |
+| **protocolo** | | **8508 ms** |
+
+Toda transação de escrita custa ~2,1 s; toda leitura, ~50 ms. A causa está em
+`config/configtx.yaml`: **`BatchTimeout: 2s`** com `MaxMessageCount: 500`. Como
+o experimento envia uma transação por vez, nunca se enche um lote e o orderer
+sempre espera o timeout inteiro.
+
+Consequências para o trabalho:
+
+1. **A latência mede corte de bloco, não lógica de protocolo.** O que distingue
+   HTLC de 2PC é o *número de escritas no caminho crítico* e se elas podem ir em
+   paralelo. HTLC tem 4 escritas estritamente sequenciais (o passo 5 precisa
+   vazar o segredo antes do 6). O 2PC também tem 4, mas `Prepare` nas duas redes
+   e `Commit` nas duas podem ir em paralelo — previsão: ~2 rodadas de bloco
+   contra 4, ou seja, cerca de metade da latência.
+2. **Manter `BatchTimeout` no padrão** e declarar na metodologia. Reduzi-lo
+   comprimiria as duas curvas e esconderia justamente o efeito de interesse.
+3. O total fim a fim do spike (23,2 s) inclui as consultas de estado e a leitura
+   da pré-imagem. Para o artigo, a latência do protocolo é a soma dos passos.
 
 ## Referências
 

@@ -42,9 +42,16 @@ clean-networks: ## Derruba as redes e apaga volumes/estado (reset completo)
 
 # ---------------------------------------------------------------- braço HTLC
 
+.PHONY: setup-htlc
+setup-htlc: ## Corrige os perfis, registra usuários e popula os ativos do braço HTLC
+	./scripts/03-setup-htlc.sh
+
 .PHONY: spike
 spike: ## Gate de viabilidade: executa um swap HTLC completo fim a fim
 	./scripts/04-spike-htlc.sh
+
+.PHONY: spike-clean
+spike-clean: clean-networks networks-up setup-htlc spike ## Ciclo completo do zero
 
 .PHONY: htlc-demo
 htlc-demo: ## Executa o orquestrador HTLC instrumentado (caso sem falha)
@@ -54,7 +61,7 @@ htlc-demo: ## Executa o orquestrador HTLC instrumentado (caso sem falha)
 
 .PHONY: deploy-2pc
 deploy-2pc: ## Empacota, instala, aprova e efetiva o chaincode twopc nas duas redes
-	./scripts/03-deploy-2pc.sh
+	./scripts/05-deploy-2pc.sh
 
 .PHONY: 2pc-demo
 2pc-demo: ## Executa o coordenador 2PC (caso sem falha)

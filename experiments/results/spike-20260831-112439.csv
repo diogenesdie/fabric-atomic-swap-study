@@ -1,0 +1,8 @@
+run_id,scenario,step,label,network,t_start_ms,duration_ms,result
+spike-20260831-112439,baseline,1,lock-bond,network1,6259,2109,OK
+spike-20260831-112439,baseline,2,verify-bond-lock,network1,8394,54,OK
+spike-20260831-112439,baseline,3,lock-tokens,network2,8464,2094,OK
+spike-20260831-112439,baseline,4,verify-token-lock,network2,10581,53,OK
+spike-20260831-112439,baseline,5,claim-tokens,network2,10649,2092,OK
+spike-20260831-112439,baseline,6,claim-bond,network1,14833,2106,OK
+spike-20260831-112439,baseline,total,end-to-end,both,0,23220,OK
