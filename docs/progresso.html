@@ -398,7 +398,7 @@ footer {
   <div class="meta">
     <span><b>Equipe</b> Diógenes Dietrich de Morais · José Francisco Dias Venturini · Pedro Augusto Pereira</span>
     <span><b>Repositório</b> <a href="https://github.com/diogenesdie/fabric-atomic-swap-study">fabric-atomic-swap-study</a></span>
-    <span><b>Situação</b> Etapas 0–2 concluídas · próxima: braço 2PC</span>
+    <span><b>Situação</b> Etapas 0–3 concluídas · próxima: harness de falhas</span>
   </div>
 </header>
 
@@ -406,36 +406,48 @@ footer {
 <section>
   <div class="section-head">
     <h2>Onde estamos</h2>
-    <span class="tag">4 commits</span>
+    <span class="tag">6 commits</span>
   </div>
 
   <div class="stack">
     <p>
-      O braço HTLC está <b>funcionando e medido</b>: um swap atômico completo
-      roda entre as duas redes, e já conseguimos <b>provocar uma violação de
-      atomicidade</b> de forma reprodutível. O braço 2PC ainda não existe — é a
-      próxima etapa, e é onde está a maior parte do código a escrever.
+      <b>Os dois braços estão funcionando e medidos.</b> O HTLC vem do Weaver;
+      o 2PC é implementação nossa, porque não existe 2PC cross-chain público
+      para Fabric. Já conseguimos provocar violação de atomicidade nos
+      <b>dois</b> — e é aí que a história fica mais interessante do que
+      esperávamos.
     </p>
 
     <div class="finding">
-      <span class="eyebrow">O resultado central até agora</span>
+      <span class="eyebrow">O achado central</span>
       <p>
-        No cenário <b>H2</b>, Alice resgata os tokens na rede 2 (revelando o
-        segredo), Bob não age, o prazo expira, e Alice recupera o bond na rede 1.
-        Ela termina com <b>os dois ativos</b>; Bob paga 100 tokens por nada.
-        Estado final medido: <code>bond=alice, alice=10100, bob=7900</code>.
+        A previsão era: <em>o HTLC viola atomicidade sob atraso; o 2PC apenas
+        bloqueia</em>. A primeira metade se confirmou. A segunda, não.
       </p>
       <p>
-        É a crítica de Zakhary (2020) ao HTLC — de que um timelock expirado pode
-        violar a atomicidade — reproduzida <b>empiricamente</b> em vez de
-        argumentada. Esse é o achado em torno do qual o artigo se organiza.
+        O 2PC bloqueia quando o coordenador cai entre as fases (cenário
+        <b>T2</b>): os dois ativos ficam presos em custódia por tempo
+        indeterminado. A válvula de escape contra isso é o
+        <code>TimeoutAbort</code>, que deixa o participante abortar sozinho
+        depois de um prazo. Mas quando esse prazo dispara em <b>apenas um</b>
+        dos participantes (cenário <b>T4</b>), o coordenador se recupera,
+        honra sua decisão de efetivar, efetiva num lado — e o outro recusa.
+        Resultado medido: <code>w17 dono=bob</code>, <code>w27 dono=bob</code>.
+        Alice pagou e não recebeu nada.
+      </p>
+      <p>
+        <b>Os dois protocolos quebram do mesmo jeito, pelo mesmo motivo.</b> O
+        mecanismo que cada um usa para comprar vivacidade — timelock no HTLC,
+        aborto por prazo no 2PC — é exatamente o que custa a segurança. O 2PC
+        não escapa da hipótese de sincronia; ele só a adia até precisar se
+        defender do bloqueio.
       </p>
     </div>
 
     <p>
-      Vale registrar o que <em>não</em> é novidade nossa: essa fragilidade é
-      conhecida na teoria. O que ninguém fez foi medi-la lado a lado com o 2PC,
-      na mesma plataforma, sob as mesmas falhas. É essa a lacuna.
+      Isso é mais forte do que o resultado que esperávamos, e só apareceu
+      porque medimos em vez de argumentar. Também conversa direto com Skeen
+      (1981): nenhum protocolo de commit é não-bloqueante sob particionamento.
     </p>
   </div>
 </section>
@@ -785,6 +797,168 @@ footer {
   </div>
 </section>
 
+<!-- =========================================================== etapa 3 -->
+<section>
+  <div class="section-head">
+    <span class="n">Etapa 3</span>
+    <h2>Braço 2PC</h2>
+    <span class="tag">299e1df</span>
+  </div>
+
+  <div class="stack">
+    <p>
+      Não existe 2PC cross-chain público para Fabric — nem o AC3WN nem o
+      protocolo de Lu et&nbsp;al. publicaram código. Este braço é nosso, e o
+      vocabulário das mensagens segue o <b>IETF SATP</b>, cujo Stage 3 é
+      literalmente um 2PC entre gateways. Alinhar custa zero e evita que a
+      comparação seja lida como um espantalho de fabricação própria.
+    </p>
+
+    <dl class="kv">
+      <dt>chaincode/twopc</dt><dd><code>Prepare</code> / <code>Commit</code> / <code>Abort</code> / <code>TimeoutAbort</code> sobre um modelo de custódia, com 16 testes unitários contra um ledger em memória</dd>
+      <dt>apps/coordinator</dt><dd>processo externo, com write-ahead log e recuperação</dd>
+      <dt>internal/</dt><dd>conexão e instrumentação compartilhadas, para que os dois braços emitam CSV idêntico</dd>
+    </dl>
+
+    <h3>Duas decisões de projeto que valem explicar</h3>
+
+    <div class="note">
+      <span class="eyebrow">Por que o coordenador é externo</span>
+      <p>
+        Não por escolha de estilo: no Fabric, <code>InvokeChaincode</code> entre
+        canais é <b>somente leitura</b> — o resultado não entra no write set nem
+        é validado no commit. Não existe transação que abranja as duas cadeias.
+      </p>
+      <p>
+        A limitação é conveniente: um processo externo é trivial de matar num
+        ponto escolhido, que é precisamente a falha que o 2PC sofre e o HTLC
+        não.
+      </p>
+    </div>
+
+    <div class="note">
+      <span class="eyebrow">Por que o WAL faz <code>fsync</code> antes do primeiro Commit</span>
+      <p>
+        É a exigência do 2PC clássico (Gray 1978). Se o coordenador manda um
+        Commit sem ter registrado a decisão e cai, ao reiniciar ele pode decidir
+        abortar — enquanto um participante já efetivou. <b>Atomicidade violada
+        por amnésia do coordenador.</b>
+      </p>
+      <p>
+        Persistir antes é o que torna o cenário T2 interessante em vez de
+        trivial: a recuperação consegue retomar a decisão exata que havia sido
+        tomada. Foi verificado — ver T2r na tabela.
+      </p>
+    </div>
+
+    <h3>Os cenários medidos</h3>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Cenário</th><th>Situação</th><th>Desfecho</th>
+            <th class="num">Bloqueio</th><th class="num">Escritas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">B2</td>
+            <td>sem falha (baseline)</td>
+            <td><span class="pill pill-ok">COMMITTED_BOTH</span></td>
+            <td class="num">2,1 s</td><td class="num">4</td>
+          </tr>
+          <tr>
+            <td class="mono">T1</td>
+            <td>um participante vota não</td>
+            <td><span class="pill pill-mute">ABORTED_BOTH</span></td>
+            <td class="num">2,0 s</td><td class="num">2</td>
+          </tr>
+          <tr>
+            <td class="mono">T2</td>
+            <td>coordenador morto entre as fases</td>
+            <td><span class="pill pill-warn">BLOCKED</span></td>
+            <td class="num">indefinido</td><td class="num">2</td>
+          </tr>
+          <tr>
+            <td class="mono">T2r</td>
+            <td>… e depois recuperado pelo WAL</td>
+            <td><span class="pill pill-ok">COMMITTED_BOTH</span></td>
+            <td class="num">32,1 s</td><td class="num">2</td>
+          </tr>
+          <tr>
+            <td class="mono">T4</td>
+            <td>prazo dispara em <b>um só</b> participante</td>
+            <td><span class="pill pill-bad">VIOLATED</span></td>
+            <td class="num">30,9 s</td><td class="num">1</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="tbl-note">
+      Em <b>T2</b> o bloqueio é indefinido por construção: os ativos ficam
+      presos até que alguém aja. <b>T2r</b> mede o custo real quando a
+      recuperação acontece — 32 segundos de capital imobilizado atravessando o
+      crash, com a atomicidade preservada. <b>T4</b> é o resultado descrito no
+      início deste documento.
+    </p>
+
+    <h3>A previsão de desempenho se confirmou</h3>
+    <div class="card stack-tight">
+      <p>
+        Na Etapa 1 previmos: mesmo número de escritas que o HTLC, mas metade das
+        rodadas de bloco, porque <code>Prepare</code> e <code>Commit</code> podem
+        ir às duas redes em paralelo. Medido:
+      </p>
+      <p class="mono" style="font-size: var(--step--1);">
+        prepare-n1 2048&nbsp;ms · prepare-n2 2048&nbsp;ms &nbsp;→&nbsp; simultâneos<br>
+        persist-decision 9&nbsp;ms &nbsp;→&nbsp; o fsync<br>
+        commit-n1 2036&nbsp;ms · commit-n2 2037&nbsp;ms &nbsp;→&nbsp; simultâneos
+      </p>
+      <p>
+        <b>~4,1 s contra os 8,5 s do HTLC</b>, com as mesmas 4 escritas. O HTLC
+        não tem como paralelizar: o passo 6 depende do segredo que o passo 5
+        vaza.
+      </p>
+    </div>
+
+    <h3>Mais três defeitos do testbed</h3>
+    <div>
+      <details class="pit">
+        <summary><span class="idx">11</span><span>Redeploy aprova o pacote errado, em silêncio</span></summary>
+        <div class="body">
+          <p>O <code>deployCC.sh</code> extrai o package-id com
+          <code>sed -n "/$CC_CHAIN_CODE_${VERSION}/..."</code>. Em bash,
+          <code>$CC_CHAIN_CODE_</code> é lido como uma variável <b>com underscore
+          no fim</b>, que não existe. O padrão degenera para <code>/&lt;versão&gt;/</code>
+          e casa com qualquer linha contendo o dígito.</p>
+          <p>Com um pacote instalado funciona por acidente. A partir do segundo
+          redeploy ele aprova o pacote antigo: <b>o canal mostra a sequência nova
+          e o peer segue executando o binário velho</b>. Perdemos um tempo achando
+          que o código não tinha efeito.</p>
+        </div>
+      </details>
+      <details class="pit">
+        <summary><span class="idx">12</span><span><code>omitempty</code> quebra o contract-api-go</span></summary>
+        <div class="body">
+          <p>O framework gera um schema em que <b>todos</b> os campos são
+          obrigatórios e valida a resposta contra ele. Um campo com
+          <code>omitempty</code> e valor zero é omitido, e a chamada falha com
+          <code>Value did not match schema</code> — sem dizer qual campo.</p>
+        </div>
+      </details>
+      <details class="pit">
+        <summary><span class="idx">13</span><span><code>network.sh</code> precisa de <code>-v</code> para a sequência</span></summary>
+        <div class="body">
+          <p>A flag <code>-v</code> é ao mesmo tempo a versão e a sequência do
+          chaincode. Sem passá-la, todo redeploy tenta sequência 1 e o peer
+          recusa com <code>requested sequence is 1, but new definition must be
+          sequence 2</code>.</p>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
 <!-- ========================================================== o achado -->
 <section>
   <div class="section-head">
@@ -814,6 +988,7 @@ footer {
       <p>
         <b>Previsão quantificada:</b> ~2 rodadas de bloco contra 4, ou seja,
         cerca de metade da latência para o 2PC no caso sem falha.
+        <b>Confirmado na Etapa 3:</b> 4,1&nbsp;s contra 8,5&nbsp;s.
       </p>
     </div>
 
@@ -886,13 +1061,8 @@ footer {
         <thead><tr><th>Etapa</th><th>Escopo</th><th>Tamanho estimado</th></tr></thead>
         <tbody>
           <tr>
-            <td class="mono">3</td>
-            <td><b>Braço 2PC.</b> Chaincode <code>twopc</code> (<code>Prepare</code> / <code>Commit</code> / <code>Abort</code> / <code>TimeoutAbort</code>) mais o coordenador externo com <em>write-ahead log</em></td>
-            <td>~700–1.050 linhas de Go</td>
-          </tr>
-          <tr>
             <td class="mono">4</td>
-            <td><b>Harness de falhas.</b> <code>tc</code>/<code>netem</code> para atraso, <code>SIGKILL</code> no coordenador, pausa de peer; matriz de 9 cenários × N&nbsp;≥&nbsp;10</td>
+            <td><b>Harness de falhas.</b> <code>tc</code>/<code>netem</code> para atraso, pausa de peer, e a matriz completa × N&nbsp;≥&nbsp;10 repetições. Inclui os cenários que faltam: H3 (atraso além da margem do timelock), T3 e o <em>clock skew</em></td>
             <td>scripts + cenários</td>
           </tr>
           <tr>
@@ -905,25 +1075,28 @@ footer {
     </div>
 
     <div class="note">
-      <span class="eyebrow">A peça crítica da Etapa 3</span>
+      <span class="eyebrow">A pergunta que a Etapa 4 precisa responder</span>
       <p>
-        O coordenador precisa <b>persistir a decisão em disco antes de enviar o
-        primeiro <code>Commit</code></b>. Sem isso, o cenário mais importante do
-        2PC — coordenador morto entre as fases — não produz o bloqueio que
-        queremos medir, e o experimento perde o seu contraste central.
+        Se os dois protocolos podem violar atomicidade quando o mecanismo
+        temporal falha, <b>o que de fato os distingue?</b> A hipótese que
+        sobrou, e que a matriz completa vai testar, é que a diferença está na
+        <b>frequência e nas condições</b> da violação, não na sua
+        possibilidade — e no custo de bloqueio que cada um cobra para evitá-la.
       </p>
       <p>
-        Detalhe do Fabric que ajuda: <code>InvokeChaincode</code> entre canais é
-        somente leitura, então o coordenador <b>tem</b> de ser um cliente
-        externo. Que é exatamente o que queremos poder matar.
+        Precisamos de N&nbsp;≥&nbsp;10 por cenário para dizer qualquer coisa
+        sobre frequência. Os números atuais são de execução única e servem para
+        mostrar que o desfecho <em>é possível</em>, não com que frequência
+        ocorre.
       </p>
     </div>
 
-    <h3>Hipótese a testar</h3>
+    <h3>Como a hipótese mudou</h3>
     <ul class="clean">
-      <li>O HTLC nunca bloqueia indefinidamente, mas <b>pode violar atomicidade</b> sob atraso — <span class="mono">já confirmado em H2</span>.</li>
-      <li>O 2PC nunca viola atomicidade, mas <b>bloqueia</b> quando o coordenador cai entre as fases — a testar.</li>
-      <li>O par <b>H3 × T3</b> é o coração do artigo: mesma falha (atraso de rede), consequências qualitativamente diferentes — o HTLC perde segurança, o 2PC só perde desempenho.</li>
+      <li><b>Confirmado:</b> o HTLC não bloqueia indefinidamente, mas viola atomicidade quando o prazo vence com o segredo já revelado — <span class="mono">H2</span>.</li>
+      <li><b>Confirmado:</b> o 2PC bloqueia quando o coordenador cai entre as fases, e o WAL permite recuperar sem violar — <span class="mono">T2, T2r</span>.</li>
+      <li><b>Refutado:</b> que o 2PC <em>não</em> viole atomicidade. Com a válvula de escape disparando de forma assimétrica, ele viola igual — <span class="mono">T4</span>.</li>
+      <li><b>Nova hipótese:</b> a diferença entre os dois é quantitativa (com que frequência, a que custo de bloqueio), não qualitativa. É o que a Etapa 4 mede.</li>
     </ul>
   </div>
 </section>
@@ -959,6 +1132,17 @@ footer {
       <div class="cmd"><span class="c">… -state-only</span><span class="d">só imprime o estado atual dos dois ledgers</span></div>
     </div>
 
+    <p>E o braço 2PC:</p>
+
+    <div class="cmds">
+      <div class="cmd"><span class="c">make deploy-2pc</span><span class="d">instala o chaincode twopc nas duas redes</span></div>
+      <div class="cmd"><span class="c">go run ./apps/coordinator -seed=w30:w40</span><span class="d">cria os ativos de uma execução</span></div>
+      <div class="cmd"><span class="c">go run ./apps/coordinator -scenario=B2 -a1=w30 -a2=w40</span><span class="d">baseline sem falha</span></div>
+      <div class="cmd"><span class="c">… -crash-after=decision -deadline=60s</span><span class="d">T2: mata o coordenador entre as fases</span></div>
+      <div class="cmd"><span class="c">make 2pc-recover</span><span class="d">retoma o que ficou pendente no write-ahead log</span></div>
+      <div class="cmd"><span class="c">go run ./apps/coordinator -timeout-abort</span><span class="d">exerce a válvula de escape do participante</span></div>
+    </div>
+
     <p class="tbl-note">
       Use um <code>-bond-id</code> diferente a cada execução (<code>a05</code> a
       <code>a14</code> estão livres) para não precisar recriar as redes. O CSV de
@@ -969,7 +1153,7 @@ footer {
 
 <footer>
   <span>Prof. Fernando Luís Dotti · Escola Politécnica · PUCRS</span>
-  <span>Documento gerado a partir do estado do repositório em 31 de agosto de 2026, commit <code>c1432b4</code>.</span>
+  <span>Documento gerado a partir do estado do repositório em 31 de agosto de 2026, commit <code>299e1df</code>.</span>
 </footer>
 
 </div>
