@@ -1,10 +1,15 @@
-package main
+// Package run instrumenta uma execução de experimento: cronometragem por
+// passo, classificação do desfecho e gravação em CSV.
+//
+// É deliberadamente compartilhado entre os dois braços — HTLC e 2PC precisam
+// emitir exatamente o mesmo formato para que a análise os trate com o mesmo
+// código.
+package run
 
 // Instrumentação: cronometragem por passo e gravação em CSV.
 //
-// O formato é o mesmo que o coordenador 2PC vai usar, para que a análise
-// (analysis/analyze.py) trate os dois braços com o mesmo código. Qualquer
-// mudança aqui precisa ser espelhada lá.
+// Qualquer mudança no cabeçalho ou na ordem das colunas precisa ser espelhada
+// em analysis/analyze.py.
 
 import (
 	"encoding/csv"
@@ -86,10 +91,33 @@ func (r *Recorder) Time(index int, label, network string, fn func() (string, err
 	}
 	if err != nil {
 		step.Result = "FALHOU"
-		step.Detail = truncate(err.Error(), 200)
+		step.Detail = Truncate(err.Error(), 200)
 	}
 	r.steps = append(r.steps, step)
 	return out, err
+}
+
+// Record registra um passo JÁ cronometrado pelo chamador.
+//
+// Necessário para chamadas em paralelo: o Recorder não é seguro para uso
+// concorrente, então quem dispara as goroutines mede por conta própria e
+// registra depois, em série.
+func (r *Recorder) Record(index int, label, network string,
+	start, duration time.Duration, err error) {
+
+	step := Step{
+		Index:    index,
+		Label:    label,
+		Network:  network,
+		Start:    start,
+		Duration: duration,
+		Result:   "OK",
+	}
+	if err != nil {
+		step.Result = "FALHOU"
+		step.Detail = Truncate(err.Error(), 200)
+	}
+	r.steps = append(r.steps, step)
 }
 
 // Skip registra um passo deliberadamente não executado (por injeção de falha),
@@ -113,7 +141,7 @@ func (r *Recorder) Note(index int, label, network, detail string) {
 		Network: network,
 		Start:   r.Elapsed(),
 		Result:  "INFO",
-		Detail:  truncate(detail, 200),
+		Detail:  Truncate(detail, 200),
 	})
 }
 
@@ -180,7 +208,9 @@ func ms(d time.Duration) string {
 	return strconv.FormatInt(d.Milliseconds(), 10)
 }
 
-func truncate(s string, n int) string {
+// Truncate encurta um texto e remove quebras de linha, que arruinariam o CSV.
+// O SDK do Fabric produz stack traces enormes em toda falha.
+func Truncate(s string, n int) string {
 	// Quebras de linha arruinariam o CSV; o SDK produz stack traces enormes.
 	out := make([]rune, 0, n)
 	for _, r := range s {

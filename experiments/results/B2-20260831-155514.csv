@@ -1,0 +1,7 @@
+run_id,protocol,scenario,step,label,network,t_start_ms,duration_ms,result,outcome,lock_duration_ms,transactions,detail
+B2-20260831-155514,2PC,B2,1,prepare-n1,network1,81,2048,OK,,,,
+B2-20260831-155514,2PC,B2,1,prepare-n2,network2,81,2048,OK,,,,
+B2-20260831-155514,2PC,B2,3,persist-decision,coordinator,2139,9,OK,,,,
+B2-20260831-155514,2PC,B2,4,commit-n1,network1,2150,2036,OK,,,,
+B2-20260831-155514,2PC,B2,4,commit-n2,network2,2149,2037,OK,,,,
+B2-20260831-155514,2PC,B2,total,end-to-end,both,0,4210,OK,COMMITTED_BOTH,2057,4,os dois ativos trocaram de dono

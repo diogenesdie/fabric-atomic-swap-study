@@ -7,6 +7,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pucrs-ppgcc/htlc-vs-2pc/internal/ledger"
+	"github.com/pucrs-ppgcc/htlc-vs-2pc/internal/run"
 	"regexp"
 	"strconv"
 	"strings"
@@ -51,14 +53,14 @@ func (s *Swap) ReadState() (LedgerState, error) {
 	// problema de conexão, não de titularidade — e silenciar isso já custou
 	// caro uma vez (ver docs/notas/fabric.md).
 	var readErrs []string
-	candidates := []*Session{s.n1Alice, s.n1Bob}
+	candidates := []*ledger.Session{s.n1Alice, s.n1Bob}
 	for _, sess := range candidates {
 		raw, err := sess.Contract.EvaluateTransaction(
 			"ReadAsset", s.cfg.BondType, s.cfg.BondID)
 		if err != nil {
 			// Erro esperado quando esta identidade não é a dona.
 			readErrs = append(readErrs,
-				fmt.Sprintf("%s: %s", sess.User, truncate(err.Error(), 120)))
+				fmt.Sprintf("%s: %s", sess.User, run.Truncate(err.Error(), 120)))
 			continue
 		}
 		var a asset
@@ -84,7 +86,7 @@ func (s *Swap) ReadState() (LedgerState, error) {
 	}
 
 	// --- rede 2: saldos de token ---
-	for _, sess := range []*Session{s.n2Alice, s.n2Bob} {
+	for _, sess := range []*ledger.Session{s.n2Alice, s.n2Bob} {
 		raw, err := sess.Contract.EvaluateTransaction("GetMyWallet")
 		if err != nil {
 			// "owner does not have a wallet" quando o participante nunca
@@ -139,7 +141,7 @@ func parseWalletBalance(wallet, tokenType string) uint64 {
 //   - nada mudou e nada está travado          -> ABORTED_BOTH
 //   - só um dos lados mudou                   -> VIOLATED (falha de segurança)
 //   - nada mudou mas algo segue travado       -> BLOCKED (falha de vivacidade)
-func Classify(before, after LedgerState, expectedQty uint64) (Outcome, string) {
+func Classify(before, after LedgerState, expectedQty uint64) (run.Outcome, string) {
 	bondMoved := before.BondOwner != after.BondOwner && after.BondOwner == "bob"
 
 	aliceGained := after.TokenBalances["alice"] >= before.TokenBalances["alice"]+expectedQty
@@ -148,22 +150,22 @@ func Classify(before, after LedgerState, expectedQty uint64) (Outcome, string) {
 
 	switch {
 	case bondMoved && tokensMoved:
-		return OutcomeCommittedBoth, "bond transferido e tokens movidos"
+		return run.OutcomeCommittedBoth, "bond transferido e tokens movidos"
 
 	case bondMoved && !tokensMoved:
-		return OutcomeViolated,
+		return run.OutcomeViolated,
 			"bond foi transferido mas os tokens não se moveram"
 
 	case !bondMoved && tokensMoved:
-		return OutcomeViolated,
+		return run.OutcomeViolated,
 			"tokens se moveram mas o bond não foi transferido"
 
 	case after.BondLocked:
-		return OutcomeBlocked,
+		return run.OutcomeBlocked,
 			"nenhum lado efetivou e o bond continua travado"
 
 	default:
-		return OutcomeAbortedBoth, "nenhum lado efetivou; nada permanece travado"
+		return run.OutcomeAbortedBoth, "nenhum lado efetivou; nada permanece travado"
 	}
 }
 

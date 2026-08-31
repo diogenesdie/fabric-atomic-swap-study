@@ -1,0 +1,6 @@
+run_id,protocol,scenario,step,label,network,t_start_ms,duration_ms,result,outcome,lock_duration_ms,transactions,detail
+T2-20260831-155656,2PC,T2,1,prepare-n1,network1,71,2043,OK,,,,
+T2-20260831-155656,2PC,T2,1,prepare-n2,network2,71,2043,OK,,,,
+T2-20260831-155656,2PC,T2,3,persist-decision,coordinator,2124,9,OK,,,,
+T2-20260831-155656,2PC,T2,3,crash,coordinator,2134,0,INFO,,,,"morto após persistir a decisão, antes de comunicá-la"
+T2-20260831-155656,2PC,T2,total,end-to-end,both,0,2149,OK,BLOCKED,34,2,nenhum lado efetivou e há ativo preso em custódia ([rede 1 rede 2])

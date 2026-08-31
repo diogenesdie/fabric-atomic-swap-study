@@ -55,7 +55,7 @@ spike-clean: clean-networks networks-up setup-htlc spike ## Ciclo completo do ze
 
 .PHONY: htlc-demo
 htlc-demo: ## Executa o orquestrador HTLC instrumentado (caso sem falha)
-	go run ./apps/htlc-orchestrator --scenario=baseline
+	go run ./apps/htlc-orchestrator -scenario=B1
 
 # ---------------------------------------------------------------- braço 2PC
 
@@ -65,7 +65,11 @@ deploy-2pc: ## Empacota, instala, aprova e efetiva o chaincode twopc nas duas re
 
 .PHONY: 2pc-demo
 2pc-demo: ## Executa o coordenador 2PC (caso sem falha)
-	go run ./apps/coordinator --scenario=baseline
+	go run ./apps/coordinator -scenario=B2
+
+.PHONY: 2pc-recover
+2pc-recover: ## Retoma as transações pendentes no write-ahead log
+	go run ./apps/coordinator -recover
 
 # ---------------------------------------------------------------- experimentos
 
@@ -82,6 +86,9 @@ analyze: ## Agrega os CSVs e gera as figuras do artigo
 .PHONY: test
 test: ## Testes unitários do chaincode e das aplicações Go
 	go test ./...
+	# O chaincode é um módulo Go separado (é empacotado e compilado pelo peer),
+	# então não é alcançado pelo ./... da raiz.
+	cd chaincode/twopc && go test ./...
 
 .PHONY: fmt
 fmt: ## Formata o código Go

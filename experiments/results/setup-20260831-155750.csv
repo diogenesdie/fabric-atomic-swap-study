@@ -1,0 +1,6 @@
+run_id,protocol,scenario,step,label,network,t_start_ms,duration_ms,result,outcome,lock_duration_ms,transactions,detail
+setup-20260831-155750,2PC,setup,1,prepare-n1,network1,48,2058,OK,,,,
+setup-20260831-155750,2PC,setup,1,prepare-n2,network2,48,2058,OK,,,,
+setup-20260831-155750,2PC,setup,3,persist-decision,coordinator,2117,9,OK,,,,
+setup-20260831-155750,2PC,setup,3,crash,coordinator,2126,0,INFO,,,,"morto após persistir a decisão, antes de comunicá-la"
+setup-20260831-155750,2PC,setup,total,end-to-end,both,0,2138,OK,BLOCKED,31,2,nenhum lado efetivou e há ativo preso em custódia ([rede 1 rede 2])

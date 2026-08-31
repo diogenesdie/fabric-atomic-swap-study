@@ -3,9 +3,12 @@
 
 # Binários compilados
 /bin/
-# `go build ./apps/x` deixa o binário na raiz com o nome do pacote
+# `go build ./apps/x` deixa o binário com o nome do pacote, na raiz ou no
+# diretório do módulo. Listados um a um porque são nomes sem extensão e um
+# padrão genérico esconderia arquivos de verdade.
 /htlc-orchestrator
 /coordinator
+/chaincode/twopc/twopc
 *.exe
 *.test
 *.out

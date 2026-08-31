@@ -27,6 +27,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/pucrs-ppgcc/htlc-vs-2pc/internal/ledger"
+	"github.com/pucrs-ppgcc/htlc-vs-2pc/internal/run"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -87,7 +89,7 @@ func main() {
 		fatal(err)
 	}
 
-	cfg, err := LoadConfig(*cfgPath)
+	cfg, err := ledger.LoadConfig(*cfgPath)
 	if err != nil {
 		fatal(fmt.Errorf("%w\n  Rode ./scripts/03-setup-htlc.sh antes", err))
 	}
@@ -103,7 +105,7 @@ func main() {
 		CrashAfter: cp,
 	}
 
-	rec := NewRecorder(*runID, *scenario, "HTLC")
+	rec := run.NewRecorder(*runID, *scenario, "HTLC")
 
 	swap, err := NewSwap(cfg, *walletDir, sc, rec)
 	if err != nil {
@@ -173,7 +175,7 @@ func main() {
 
 	// Um erro de execução não é necessariamente falha do experimento: em
 	// cenários de injeção, a interrupção é o comportamento pretendido.
-	if runErr != nil && observed == OutcomeError {
+	if runErr != nil && observed == run.OutcomeError {
 		fatal(runErr)
 	}
 }
@@ -182,7 +184,7 @@ func main() {
 //
 // No Fabric nada expira sozinho: sem esta invocação o ativo fica preso mesmo
 // com o prazo vencido. O tempo de espera é parte da métrica de bloqueio.
-func exerciseReclaim(swap *Swap, rec *Recorder, sc SwapConfig, cp CrashPoint) {
+func exerciseReclaim(swap *Swap, rec *run.Recorder, sc SwapConfig, cp CrashPoint) {
 	// Quem precisa resgatar, e após qual prazo, depende de onde paramos.
 	var wait time.Duration
 	switch cp {
@@ -228,7 +230,7 @@ func header(runID, scenario string, sc SwapConfig) {
 // printSteps imprime só as medições ainda não impressas.
 var printedSteps int
 
-func printSteps(rec *Recorder) {
+func printSteps(rec *run.Recorder) {
 	steps := rec.Steps()
 	for _, st := range steps[printedSteps:] {
 		switch st.Result {

@@ -1,0 +1,5 @@
+run_id,protocol,scenario,step,label,network,t_start_ms,duration_ms,result,outcome,lock_duration_ms,transactions,detail
+T2r-20260831-155726,2PC,T2r,6,recover,coordinator,80,0,INFO,,,,decisão durável encontrada (COMMIT_DECIDED): retomando
+T2r-20260831-155726,2PC,T2r,4,commit-n1,network1,80,2037,OK,,,,
+T2r-20260831-155726,2PC,T2r,4,commit-n2,network2,80,2037,OK,,,,
+T2r-20260831-155726,2PC,T2r,total,end-to-end,both,0,2138,OK,COMMITTED_BOTH,32091,2,os dois ativos trocaram de dono

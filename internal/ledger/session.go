@@ -1,4 +1,8 @@
-package main
+// Package ledger abre conexões com as redes Fabric do experimento.
+//
+// Compartilhado entre o orquestrador HTLC e o coordenador 2PC: os dois braços
+// precisam falar com as mesmas duas redes, sob as mesmas identidades.
+package ledger
 
 // Conexão com as duas redes Fabric.
 //
@@ -49,9 +53,10 @@ func LoadConfig(path string) (Config, error) {
 
 // Session é uma conexão aberta a um chaincode, sob uma identidade específica.
 type Session struct {
-	Network string
-	User    string
-	CertB64 string // certificado do usuário, em base64 — o HTLC identifica as
+	Network   string
+	User      string
+	Chaincode string
+	CertB64   string // certificado do usuário, em base64 — o HTLC identifica as
 	// partes por certificado, não por nome
 	Contract *gateway.Contract
 	gw       *gateway.Gateway
@@ -70,9 +75,21 @@ func (s *Session) Close() {
 // scripts/03-setup-htlc.sh. Aqui apenas a carregamos: registrar usuários no
 // meio de um experimento distorceria as medições de latência.
 func Connect(cfg Config, walletRoot, network, user string) (*Session, error) {
+	return ConnectContract(cfg, walletRoot, network, user, "")
+}
+
+// ConnectContract abre uma sessão apontando para um chaincode específico.
+//
+// O config.json vem da go-cli do Weaver e nomeia o simpleasset, usado pelo
+// braço HTLC. O braço 2PC fala com o chaincode twopc no mesmo canal, então
+// precisa sobrescrever esse nome. Passar "" mantém o do config.
+func ConnectContract(cfg Config, walletRoot, network, user, chaincode string) (*Session, error) {
 	nc, ok := cfg[network]
 	if !ok {
 		return nil, fmt.Errorf("rede desconhecida: %s", network)
+	}
+	if chaincode == "" {
+		chaincode = nc.Chaincode
 	}
 
 	// Sem isto o service discovery devolve os endereços INTERNOS dos peers
@@ -116,11 +133,12 @@ func Connect(cfg Config, walletRoot, network, user string) (*Session, error) {
 	}
 
 	return &Session{
-		Network:  network,
-		User:     user,
-		CertB64:  cert,
-		Contract: net.GetContract(nc.Chaincode),
-		gw:       gw,
+		Network:   network,
+		User:      user,
+		Chaincode: chaincode,
+		CertB64:   cert,
+		Contract:  net.GetContract(chaincode),
+		gw:        gw,
 	}, nil
 }
 

@@ -1,0 +1,8 @@
+run_id,protocol,scenario,step,label,network,t_start_ms,duration_ms,result,outcome,lock_duration_ms,transactions,detail
+T4r-20260831-160054,2PC,T4r,6,recover,coordinator,66,0,INFO,,,,decisão durável encontrada (COMMIT_DECIDED): retomando
+T4r-20260831-160054,2PC,T4r,4,commit-n1,network1,66,2029,OK,,,,
+T4r-20260831-160054,2PC,T4r,4,commit-n2,network2,66,4,FALHOU,,,,Failed to submit: Transaction processing for endorser [localhost:9051]: Chaincode status Code: (500) UNKNOWN. Description: a transação tx-T4-20260831-160032 já foi decidida como ABORTED; não pode vira
+T4r-20260831-160054,2PC,T4r,5,retry-commit-n2,network2,3097,10,FALHOU,,,,Failed to submit: Transaction processing for endorser [localhost:9051]: Chaincode status Code: (500) UNKNOWN. Description: a transação tx-T4-20260831-160032 já foi decidida como ABORTED; não pode vira
+T4r-20260831-160054,2PC,T4r,5,retry-commit-n2,network2,5107,5,FALHOU,,,,Failed to submit: Transaction processing for endorser [localhost:9051]: Chaincode status Code: (500) UNKNOWN. Description: a transação tx-T4-20260831-160032 já foi decidida como ABORTED; não pode vira
+T4r-20260831-160054,2PC,T4r,5,retry-commit-n2,network2,8114,5,FALHOU,,,,Failed to submit: Transaction processing for endorser [localhost:9051]: Chaincode status Code: (500) UNKNOWN. Description: a transação tx-T4-20260831-160032 já foi decidida como ABORTED; não pode vira
+T4r-20260831-160054,2PC,T4r,total,end-to-end,both,0,8144,OK,VIOLATED,30940,1,só o ativo da rede 1 trocou de dono

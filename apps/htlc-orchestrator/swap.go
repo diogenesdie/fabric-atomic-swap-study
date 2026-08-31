@@ -23,6 +23,8 @@ import (
 	"time"
 
 	am "github.com/hyperledger-cacti/cacti/weaver/sdks/fabric/go-sdk/v3/asset-manager"
+	"github.com/pucrs-ppgcc/htlc-vs-2pc/internal/ledger"
+	"github.com/pucrs-ppgcc/htlc-vs-2pc/internal/run"
 )
 
 // CrashPoint marca onde a execução deve ser interrompida.
@@ -70,13 +72,13 @@ func (c SwapConfig) Validate() error {
 // Swap conduz uma execução do protocolo.
 type Swap struct {
 	cfg SwapConfig
-	rec *Recorder
+	rec *run.Recorder
 
 	// Sessões: uma por (rede, participante). O HTLC precisa das duas
 	// identidades em cada rede, porque locker e recipient são designados por
 	// certificado.
-	n1Alice, n1Bob *Session
-	n2Alice, n2Bob *Session
+	n1Alice, n1Bob *ledger.Session
+	n2Alice, n2Bob *ledger.Session
 
 	hash         string
 	tokenLockID  string // contractId do lock fungível
@@ -86,7 +88,7 @@ type Swap struct {
 }
 
 // NewSwap monta as quatro sessões necessárias.
-func NewSwap(cfg Config, walletRoot string, sc SwapConfig, rec *Recorder) (*Swap, error) {
+func NewSwap(cfg ledger.Config, walletRoot string, sc SwapConfig, rec *run.Recorder) (*Swap, error) {
 	if err := sc.Validate(); err != nil {
 		return nil, err
 	}
@@ -94,7 +96,7 @@ func NewSwap(cfg Config, walletRoot string, sc SwapConfig, rec *Recorder) (*Swap
 	s := &Swap{cfg: sc, rec: rec}
 
 	type conn struct {
-		target  **Session
+		target  **ledger.Session
 		network string
 		user    string
 	}
@@ -104,7 +106,7 @@ func NewSwap(cfg Config, walletRoot string, sc SwapConfig, rec *Recorder) (*Swap
 		{&s.n2Alice, "network2", "alice"},
 		{&s.n2Bob, "network2", "bob"},
 	} {
-		sess, err := Connect(cfg, walletRoot, c.network, c.user)
+		sess, err := ledger.Connect(cfg, walletRoot, c.network, c.user)
 		if err != nil {
 			s.Close()
 			return nil, err
@@ -116,7 +118,7 @@ func NewSwap(cfg Config, walletRoot string, sc SwapConfig, rec *Recorder) (*Swap
 
 // Close libera todas as sessões.
 func (s *Swap) Close() {
-	for _, sess := range []*Session{s.n1Alice, s.n1Bob, s.n2Alice, s.n2Bob} {
+	for _, sess := range []*ledger.Session{s.n1Alice, s.n1Bob, s.n2Alice, s.n2Bob} {
 		if sess != nil {
 			sess.Close()
 		}
@@ -130,7 +132,7 @@ func (s *Swap) Hash() string { return s.hash }
 func (s *Swap) TokenLockID() string { return s.tokenLockID }
 
 // Run executa o protocolo até o fim ou até o ponto de crash configurado.
-func (s *Swap) Run() (Summary, error) {
+func (s *Swap) Run() (run.Summary, error) {
 	cfg := s.cfg
 	t1 := uint64(time.Now().Add(cfg.T1).Unix())
 	t2 := uint64(time.Now().Add(cfg.T2).Unix())
@@ -146,7 +148,7 @@ func (s *Swap) Run() (Summary, error) {
 		)
 	})
 	if err != nil {
-		return s.summarize(OutcomeError, "falha ao travar o bond"), err
+		return s.summarize(run.OutcomeError, "falha ao travar o bond"), err
 	}
 	s.transactions++
 	s.lockedAt = time.Now()
@@ -159,7 +161,7 @@ func (s *Swap) Run() (Summary, error) {
 		// Não é violação de atomicidade — nenhum lado efetivou — mas é
 		// imobilização de capital, que é o custo que queremos medir.
 		s.rec.Skip(3, "lock-tokens", "network2", "crash injetado após lock1")
-		return s.summarize(OutcomeBlocked,
+		return s.summarize(run.OutcomeBlocked,
 			"bond travado, contraparte ausente: aguardando expiração de T1"), nil
 	}
 
@@ -172,7 +174,7 @@ func (s *Swap) Run() (Summary, error) {
 		)
 	})
 	if err != nil {
-		return s.summarize(OutcomeError, "bob não confirmou o lock de alice"), err
+		return s.summarize(run.OutcomeError, "bob não confirmou o lock de alice"), err
 	}
 
 	// ---- passo 3: bob trava os tokens na rede 2 ----------------------
@@ -186,7 +188,7 @@ func (s *Swap) Run() (Summary, error) {
 		)
 	})
 	if err != nil {
-		return s.summarize(OutcomeError, "falha ao travar os tokens"), err
+		return s.summarize(run.OutcomeError, "falha ao travar os tokens"), err
 	}
 	s.transactions++
 	s.tokenLockID = strings.TrimSpace(lockID)
@@ -196,7 +198,7 @@ func (s *Swap) Run() (Summary, error) {
 		// Ambos travados, ninguém resgata: os dois prazos expiram e cada um
 		// recupera o seu. Atomicidade preservada, bloqueio máximo.
 		s.rec.Skip(5, "claim-tokens", "network2", "crash injetado após lock2")
-		return s.summarize(OutcomeBlocked,
+		return s.summarize(run.OutcomeBlocked,
 			"ambos travados, nenhum resgate: aguardando expiração"), nil
 	}
 
@@ -205,7 +207,7 @@ func (s *Swap) Run() (Summary, error) {
 		return am.IsFungibleAssetLockedInHTLC(s.n2Alice.Contract, s.tokenLockID)
 	})
 	if err != nil {
-		return s.summarize(OutcomeError, "alice não confirmou o lock de bob"), err
+		return s.summarize(run.OutcomeError, "alice não confirmou o lock de bob"), err
 	}
 
 	// ---- passo 5: alice resgata e REVELA o segredo -------------------
@@ -217,7 +219,7 @@ func (s *Swap) Run() (Summary, error) {
 		)
 	})
 	if err != nil {
-		return s.summarize(OutcomeError, "alice não conseguiu resgatar os tokens"), err
+		return s.summarize(run.OutcomeError, "alice não conseguiu resgatar os tokens"), err
 	}
 	s.transactions++
 
@@ -227,7 +229,7 @@ func (s *Swap) Run() (Summary, error) {
 		// fica com os dois ativos — violação de atomicidade. Enquanto T1 não
 		// expira, ainda é recuperável.
 		s.rec.Skip(6, "claim-bond", "network1", "crash injetado após claim1")
-		return s.summarize(OutcomeViolated,
+		return s.summarize(run.OutcomeViolated,
 			"alice recebeu os tokens; bond ainda travado — bob precisa resgatar antes de T1"), nil
 	}
 
@@ -237,12 +239,12 @@ func (s *Swap) Run() (Summary, error) {
 	// pré-imagem do ledger da rede 2, onde o resgate de alice a tornou pública.
 	revealed, err := s.readRevealedSecret()
 	if err != nil {
-		return s.summarize(OutcomeViolated,
+		return s.summarize(run.OutcomeViolated,
 			"bob não recuperou o segredo do ledger"), err
 	}
 	s.rec.Note(6, "secret-from-ledger", "network2", revealed)
 	if revealed != cfg.Secret {
-		return s.summarize(OutcomeError,
+		return s.summarize(run.OutcomeError,
 				fmt.Sprintf("segredo lido (%q) difere do original", revealed)),
 			errors.New("segredo divergente")
 	}
@@ -257,13 +259,13 @@ func (s *Swap) Run() (Summary, error) {
 	})
 	if err != nil {
 		// Caso mais grave: alice levou os tokens e bob perdeu o bond.
-		return s.summarize(OutcomeViolated,
+		return s.summarize(run.OutcomeViolated,
 			"alice recebeu os tokens mas bob falhou ao resgatar o bond"), err
 	}
 	s.transactions++
 	s.unlockedAt = time.Now()
 
-	return s.summarize(OutcomeCommittedBoth, "troca completa"), nil
+	return s.summarize(run.OutcomeCommittedBoth, "troca completa"), nil
 }
 
 // readRevealedSecret lê a pré-imagem publicada no ledger da rede 2.
@@ -318,11 +320,11 @@ func (s *Swap) ReclaimTokens() error {
 // Precisa ser chamado DEPOIS de eventuais resgates: o tempo de bloqueio só
 // termina quando o ativo volta ao dono, e o resgate é uma escrita a mais no
 // custo. Calcular durante Run() subestimaria as duas coisas.
-func (s *Swap) Summarize(o Outcome, detail string) Summary {
+func (s *Swap) Summarize(o run.Outcome, detail string) run.Summary {
 	return s.summarize(o, detail)
 }
 
-func (s *Swap) summarize(o Outcome, detail string) Summary {
+func (s *Swap) summarize(o run.Outcome, detail string) run.Summary {
 	lock := time.Duration(0)
 	if !s.lockedAt.IsZero() {
 		end := s.unlockedAt
@@ -331,7 +333,7 @@ func (s *Swap) summarize(o Outcome, detail string) Summary {
 		}
 		lock = end.Sub(s.lockedAt)
 	}
-	return Summary{
+	return run.Summary{
 		Outcome:      o,
 		LockDuration: lock,
 		Transactions: s.transactions,
