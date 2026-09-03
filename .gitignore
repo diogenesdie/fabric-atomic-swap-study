@@ -58,3 +58,7 @@ venv/
 /docs/paper/figures/*.pdf
 /docs/paper/figures/results.md
 /docs/paper/figures/results.tex
+
+# O deck v2 é gerado por docs/seminario/build_deck.py a partir do original.
+# O original é versionado; o gerado, não.
+/seminario-cross-chain-v2.pptx
