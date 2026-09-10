@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tudo ou Nada entre Blockchains</title>
+<meta name="description" content="Seminário: transações atômicas entre múltiplas blockchains. HTLC e 2PC explicados do zero, com animações, e medidos lado a lado no Hyperledger Fabric.">
+<meta name="color-scheme" content="light dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,500&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/styles.css">
+<script>
+  // Aplica o tema salvo antes da primeira pintura, para não piscar.
+  try { var t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+</head>
+<body>
+
+<div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
+
+<button class="icon-btn rail-toggle" id="rail-toggle" aria-label="Abrir índice de capítulos" aria-expanded="false">
+  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg>
+</button>
+
+<div class="topbar">
+  <button class="icon-btn" id="theme-toggle" aria-label="Alternar tema claro e escuro">
+    <svg class="only-light" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M13.5 12.2A5.5 5.5 0 0 1 7.8 6.5a5.5 5.5 0 1 0 5.7 5.7z"/></svg>
+    <svg class="only-dark" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10" cy="10" r="3.6"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.3 4.3l1.4 1.4M14.3 14.3l1.4 1.4M4.3 15.7l1.4-1.4M14.3 5.7l1.4-1.4"/></svg>
+  </button>
+</div>
+
+<nav class="rail" id="rail" aria-label="Capítulos">
+  <div class="rail-title">Capítulos</div>
+  <a href="#top" data-chapter="top"><span class="n">·</span><span>Início</span></a>
+  <div class="rail-part">Parte A · fundamentos</div>
+  <a href="#c1" data-chapter="c1"><span class="n">1</span><span>O livro que ninguém apaga</span></a>
+  <a href="#c2" data-chapter="c2"><span class="n">2</span><span>Regras que se cumprem sozinhas</span></a>
+  <a href="#c3" data-chapter="c3"><span class="n">3</span><span>Ilhas: o problema cross-chain</span></a>
+  <a href="#c4" data-chapter="c4"><span class="n">4</span><span>Tudo ou nada</span></a>
+  <div class="rail-part">Parte B · as duas soluções</div>
+  <a href="#c5" data-chapter="c5"><span class="n">5</span><span>2PC: alguém pergunta antes</span></a>
+  <a href="#c6" data-chapter="c6"><span class="n">6</span><span>HTLC: um segredo e um relógio</span></a>
+  <a href="#c7" data-chapter="c7"><span class="n">7</span><span>Não há almoço grátis</span></a>
+  <div class="rail-part">Parte C · o experimento</div>
+  <a href="#c8" data-chapter="c8"><span class="n">8</span><span>O laboratório: Fabric</span></a>
+  <a href="#c9" data-chapter="c9"><span class="n">9</span><span>Treze maneiras de falhar</span></a>
+  <a href="#c10" data-chapter="c10"><span class="n">10</span><span>Resultados</span></a>
+  <a href="#c11" data-chapter="c11"><span class="n">11</span><span>O que fica</span></a>
+  <a href="#c12" data-chapter="c12"><span class="n">12</span><span>Referências e glossário</span></a>
+  <div class="rail-help">
+    <kbd>→</kbd> próximo capítulo · <kbd>←</kbd> anterior<br>
+    <b>⤢ Ampliar</b> põe a figura em tela cheia; ali, <kbd>→</kbd> avança o passo.
+  </div>
+</nav>
+
+<main>
+<div class="wrap">
+
+<!-- ============================================================ CAPA -->
+<header class="hero" id="top">
+  <div class="hero-text">
+    <div class="eyebrow">Plataformas Computacionais para Sistemas Distribuídos · PPGCC/PUCRS · 2026/2 · Seminário</div>
+    <h1>Ou os dois lados acontecem, ou nenhum.</h1>
+    <p class="lede">Transações atômicas entre blockchains: <strong>Hashed Timelock Contract (HTLC)</strong> e <strong>Two-Phase Commit (2PC)</strong>, explicados do zero e medidos lado a lado, sob as mesmas falhas, no Hyperledger Fabric.</p>
+    <div class="hero-actions">
+      <a class="btn btn-gold" href="#c1">Começar do zero</a>
+      <a class="btn" href="#c10">Ir direto aos resultados</a>
+      <span class="hint">~15 min. Nada aqui exige saber programar.</span>
+    </div>
+    <div class="hero-meta">
+      <span><b>Equipe</b> Diógenes Dietrich de Morais · José Francisco Dias Venturini · Pedro Augusto Pereira</span>
+      <span><b>Orientação</b> Prof. Fernando Luís Dotti</span>
+    </div>
+  </div>
+
+  <div class="hero-visual" aria-hidden="true">
+    <svg id="hero-svg" viewBox="0 0 960 250" preserveAspectRatio="xMidYMid meet">
+      <text class="lane-label" x="24" y="46">REDE A · o título de Alice</text>
+      <text class="lane-label" x="24" y="162">REDE B · os tokens de Bob</text>
+      <g id="hero-chain-a"></g>
+      <g id="hero-chain-b"></g>
+      <path id="hero-swap" class="swap" d="M 300 102 C 360 150, 600 125, 660 174"></path>
+      <circle id="hero-dot-1" class="swap-dot" r="5" cx="300" cy="102"></circle>
+      <circle id="hero-dot-2" class="swap-dot" r="5" cx="660" cy="174"></circle>
+      <text class="caption" x="480" y="242" text-anchor="middle">dois livros independentes · uma troca que precisa acontecer inteira</text>
+    </svg>
+  </div>
+</header>
+
+<!-- ============================================================ CAP 1 -->
+<section class="chapter" id="c1" aria-labelledby="h-c1">
+  <div class="chapter-head reveal">
+    <div class="eyebrow"><span class="n">Capítulo 1</span> Blockchain</div>
+    <h2 id="h-c1">Uma blockchain é um livro-caixa copiado em muitos computadores, onde ninguém apaga o passado.</h2>
+  </div>
+
+  <div class="cols cols-text-fig">
+    <div class="prose reveal">
+      <p>Cada linha registra quem transferiu o quê para quem. O livro é copiado em vários computadores, os <strong>nós</strong>, e as linhas são agrupadas em <strong>blocos</strong>. Cada bloco guarda a <strong>impressão digital</strong> (o <em>hash</em>) do anterior: mudar um bloco antigo faz todos os seguintes deixarem de bater, e qualquer nó percebe.</p>
+      <p>Quem decide o próximo bloco é uma regra de <strong>consenso</strong> entre os nós. Em redes <strong>permissionadas</strong>, como a do experimento, os participantes são conhecidos.</p>
+      <div class="callout">
+        <span class="eyebrow">Guarde isto</span>
+        O livro só sabe do que acontece <strong>dentro</strong> dele. Essa cegueira é a raiz do problema deste seminário.
+      </div>
+    </div>
+
+    <figure class="figure reveal" id="chain-demo">
+      <div class="figure-head">
+        <h4>Experimente: altere o passado</h4>
+        <span class="hint">Edite o texto de um bloco.</span>
+      </div>
+      <div class="chain" id="chain"></div>
+      <div class="controls">
+        <button class="btn btn-sm btn-primary" id="chain-add">+ Registrar transação</button>
+        <button class="btn btn-sm" id="chain-tamper">Alterar o bloco 2</button>
+        <button class="btn btn-sm btn-ghost" id="chain-reset">Restaurar</button>
+      </div>
+      <figcaption class="fig-foot" id="chain-say">Cada bloco guarda o hash do anterior. Enquanto tudo bate, a corrente está íntegra.</figcaption>
+    </figure>
+  </div>
+
+  <a class="next-link" href="#c2"><span class="eyebrow">Próximo</span> Regras que se cumprem sozinhas <span class="arrow">→</span></a>
+</section>
+
+<!-- ============================================================ CAP 2 -->
+<section class="chapter" id="c2" aria-labelledby="h-c2">
+  <div class="chapter-head reveal">
+    <div class="eyebrow"><span class="n">Capítulo 2</span> Contratos inteligentes</div>
+    <h2 id="h-c2">Um contrato inteligente é uma regra escrita no livro, que todos os nós executam do mesmo jeito.</h2>
+  </div>
+
+  <div class="cols cols-text-fig">
+    <div class="prose reveal">
+      <p>É a <strong>máquina de venda automática</strong>: moeda entra, produto sai, sem atendente. A regra vive no livro, todos os nós a executam sobre o mesmo estado, e só o resultado unânime vira registro. No Hyperledger Fabric, chama-se <em>chaincode</em>.</p>
+      <p>Duas limitações que voltam nos capítulos 5, 6 e 8:</p>
+      <ul>
+        <li><strong>O contrato não tem relógio.</strong> O horário chega carimbado no pedido; o contrato só compara.</li>
+        <li><strong>O contrato não enxerga outras blockchains.</strong> Só lê e escreve no próprio livro.</li>
+      </ul>
+    </div>
+
+    <figure class="figure reveal" id="contract-demo">
+      <div class="figure-head">
+        <h4>Experimente: a mesma regra em três nós</h4>
+        <span class="hint">Mude o saldo e execute.</span>
+      </div>
+      <div class="contract">
+        <div class="rule">
+          <span class="kw">REGRA</span> transferir(de: Alice, para: Bob, valor: <span class="val">10</span>)<br>
+          &nbsp;&nbsp;<span class="kw">SE</span> saldo(Alice) ≥ <span class="val">10</span> → <span class="kw">APROVADO</span><br>
+          &nbsp;&nbsp;<span class="kw">SENÃO</span> → <span class="kw">RECUSADO</span>
+        </div>
+        <div class="balance">
+          <label for="balance">Saldo de Alice</label>
+          <input type="range" id="balance" min="0" max="20" value="12" step="1">
+          <output id="balance-out" for="balance">12</output> tokens
+          <button class="btn btn-sm btn-primary" id="contract-run">▶ Executar nos três nós</button>
+        </div>
+        <div class="nodes">
+          <div class="node"><span class="who">NÓ 1</span><span class="res">aguardando</span></div>
+          <div class="node"><span class="who">NÓ 2</span><span class="res">aguardando</span></div>
+          <div class="node"><span class="who">NÓ 3</span><span class="res">aguardando</span></div>
+        </div>
+      </div>
+      <figcaption class="fig-foot" id="contract-say">Os três nós executam a mesma regra. Só quando concordam a transferência entra no livro.</figcaption>
+    </figure>
+  </div>
+
+  <a class="next-link" href="#c3"><span class="eyebrow">Próximo</span> Ilhas: o problema cross-chain <span class="arrow">→</span></a>
+</section>
+
+<!-- ============================================================ CAP 3 -->
+<section class="chapter" id="c3" aria-labelledby="h-c3">
+  <div class="chapter-head reveal">
+    <div class="eyebrow"><span class="n">Capítulo 3</span> O problema cross-chain</div>
+    <h2 id="h-c3">Cada blockchain é uma ilha. Trocar algo entre duas ilhas é o problema.</h2>
+    <p class="lede">Alice tem um <strong>título</strong> na Rede A. Bob tem <strong>tokens</strong> na Rede B. Eles querem trocar.</p>
+  </div>
+
+  <div class="stack-lg">
+    <div class="cols cols-2 reveal">
+      <div class="prose">
+        <p>Não existe livro que cubra as duas redes, então <strong>alguém precisa se mover primeiro</strong>. E quem se move primeiro fica exposto. É vender um carro para um desconhecido em outra cidade: quem entrega antes, o carro ou o dinheiro?</p>
+      </div>
+      <div class="callout bad">
+        <span class="eyebrow">O que queremos evitar</span>
+        A <strong>efetivação parcial</strong>: só um lado da troca acontece. Alguém fica com os dois ativos.
+      </div>
+    </div>
+
+    <figure class="figure reveal" id="first-mover">
+      <div class="figure-head">
+        <h4>Experimente: quem entrega primeiro?</h4>
+        <span class="hint">Escolha quem se move primeiro.</span>
+      </div>
+      <div class="sim">
+        <div class="sim-stage" id="stage-fm"></div>
+        <div class="controls">
+          <button class="btn btn-sm btn-primary" id="fm-alice">Alice entrega primeiro</button>
+          <button class="btn btn-sm btn-primary" id="fm-bob">Bob entrega primeiro</button>
+          <button class="btn btn-sm btn-ghost" id="fm-reset">Reiniciar</button>
+          <span class="spacer"></span>
+          <span class="outcome pending" id="fm-outcome">—</span>
+        </div>
+        <p class="narration idle" id="fm-say">Dois livros, dois donos. Quem age primeiro confia no outro.</p>
+      </div>
+    </figure>
+  </div>
+
+  <a class="next-link" href="#c4"><span class="eyebrow">Próximo</span> Tudo ou nada <span class="arrow">→</span></a>
+</section>
+
+<!-- ============================================================ CAP 4 -->
+<section class="chapter" id="c4" aria-labelledby="h-c4">
+  <div class="chapter-head reveal">
+    <div class="eyebrow"><span class="n">Capítulo 4</span> Atomicidade</div>
+    <h2 id="h-c4">Atomicidade: ou os dois livros mudam, ou nenhum muda.</h2>
+    <p class="lede">Isso dá exatamente quatro finais possíveis. As quatro cores acompanham o seminário até o fim.</p>
+  </div>
+
+  <div class="stack-lg">
+    <div class="cards cards-2 reveal">
+      <div class="card tone-ok">
+        <span class="outcome ok">COMMITTED_BOTH</span>
+        <h4>Os dois lados efetivaram</h4>
+        <p>A troca aconteceu inteira. <strong>Correto.</strong></p>
+      </div>
+      <div class="card tone-neutral">
+        <span class="outcome neutral">ABORTED_BOTH</span>
+        <h4>Nenhum lado efetivou</h4>
+        <p>Cada um ficou com o que tinha. <strong>Também correto.</strong></p>
+      </div>
+      <div class="card tone-bad">
+        <span class="outcome bad">VIOLATED</span>
+        <h4>Só um lado efetivou</h4>
+        <p>Alguém ficou com os dois ativos. Falha de <strong>segurança</strong>.</p>
+      </div>
+      <div class="card tone-blocked">
+        <span class="outcome blocked">BLOCKED</span>
+        <h4>Preso, sem decisão</h4>
+        <p>Ninguém perdeu, ninguém pode usar. Falha de <strong>vivacidade</strong>.</p>
+      </div>
+    </div>
+
+    <div class="cols cols-text-fig">
+      <div class="prose reveal">
+        <p><strong>Segurança</strong>: a coisa errada nunca acontece. <strong>Vivacidade</strong>: alguma coisa acaba acontecendo. Todo protocolo deste seminário troca uma pela outra.</p>
+        <p><strong>Atomicidade não é consenso.</strong> Consenso decide por maioria. Commit atômico exige unanimidade: um único "não" aborta tudo. É mais forte, e por isso mais frágil a falhas.</p>
+      </div>
+
+      <figure class="figure reveal" id="vote-demo">
+        <div class="figure-head">
+          <h4>Experimente: maioria ou unanimidade?</h4>
+          <span class="hint">Clique para trocar um voto.</span>
+        </div>
+        <div class="voters" id="voters">
+          <button class="voter" data-vote="yes"><span class="face">NÓ A</span><span class="vote">SIM</span></button>
+          <button class="voter" data-vote="yes"><span class="face">NÓ B</span><span class="vote">SIM</span></button>
+          <button class="voter" data-vote="yes"><span class="face">NÓ C</span><span class="vote">SIM</span></button>
+          <button class="voter" data-vote="no"><span class="face">NÓ D</span><span class="vote">NÃO</span></button>
+        </div>
+        <div class="verdicts">
+          <div class="verdict" id="v-consensus"><span class="eyebrow">Consenso · maioria</span><span class="res">—</span><span class="why"></span></div>
+          <div class="verdict" id="v-commit"><span class="eyebrow">Commit atômico · unanimidade</span><span class="res">—</span><span class="why"></span></div>
+        </div>
+      </figure>
+    </div>
+  </div>
+
+  <a class="next-link" href="#c5"><span class="eyebrow">Próximo</span> 2PC: alguém pergunta antes <span class="arrow">→</span></a>
+</section>
+
+<!-- ============================================================ CAP 5 -->
+<section class="chapter" id="c5" aria-labelledby="h-c5">
+  <div class="chapter-head reveal">
+    <div class="eyebrow"><span class="n">Capítulo 5</span> Solução 1 · <span class="tag tag-2pc">2PC</span></div>
+    <h2 id="h-c5">Two-Phase Commit: primeiro todo mundo promete, depois todo mundo cumpre.</h2>
+    <p class="lede">A resposta clássica dos bancos de dados (Gray, 1978): um <strong>coordenador</strong> pergunta antes de mandar fazer. Como reservar voo e hotel: confirma os dois só depois que os dois disseram que têm vaga.</p>
+  </div>
+
+  <div class="stack-lg">
+    <div class="cols cols-2">
+      <div class="prose reveal">
+        <ol class="steps">
+          <li><strong>Preparo: "consegue?"</strong><span>Cada rede põe o ativo em <strong>custódia</strong>, anota no livro e responde SIM ou NÃO. Quem diz SIM não pode mais desistir sozinho.</span></li>
+          <li><strong>Decisão: "então faça"</strong><span>Todos SIM? O coordenador <strong>grava a decisão no diário</strong> e manda EFETIVAR. Algum NÃO? Manda ABORTAR. Gravar antes de mandar é o que permite retomar após uma queda.</span></li>
+        </ol>
+      </div>
+      <div class="prose reveal">
+        <h3>O ponto fraco: o coordenador</h3>
+        <p>Se ele cai <strong>entre as fases</strong>, as redes que disseram SIM não podem efetivar (e se a outra disse NÃO?) nem desistir (e se a decisão foi efetivar?). Só podem <strong>esperar</strong>, com os ativos presos. É o <strong>bloqueio</strong> do 2PC, e Skeen (1981) provou que nenhum protocolo de commit escapa dele sob partição.</p>
+        <p>Cross-chain, o coordenador é um <strong>programa externo</strong>, porque um contrato não enxerga outra rede. Para não travar para sempre, cada rede ganha um <strong>prazo</strong> para desistir sozinha. Guarde essa válvula.</p>
+      </div>
+    </div>
+
+    <figure class="figure reveal" id="sim-2pc">
+      <div class="figure-head">
+        <h4>Simulador: o 2PC em cinco situações</h4>
+        <span class="hint">Escolha a situação e reproduza ou avance passo a passo.</span>
+      </div>
+      <div class="sim">
+        <div class="tabs" role="tablist" id="tabs-2pc">
+          <button class="tab" role="tab" aria-selected="true" data-scenario="ok">Sem falha</button>
+          <button class="tab" role="tab" aria-selected="false" data-scenario="no">Uma rede diz NÃO</button>
+          <button class="tab" role="tab" aria-selected="false" data-scenario="crash">Coordenador cai entre as fases</button>
+          <button class="tab" role="tab" aria-selected="false" data-scenario="recover">… e volta lendo o diário</button>
+          <button class="tab" role="tab" aria-selected="false" data-scenario="timeout">… mas uma rede desistiu pelo prazo</button>
+        </div>
+        <div class="sim-stage" id="stage-2pc"></div>
+        <p class="narration idle" id="s2-say"><span class="step-n"></span><span>Pressione ▶ Reproduzir.</span></p>
+        <div class="controls">
+          <button class="btn btn-sm btn-primary" id="s2-play">▶ Reproduzir</button>
+          <button class="btn btn-sm" id="s2-step">Passo →</button>
+          <button class="btn btn-sm btn-ghost" id="s2-reset">Reiniciar</button>
+          <span class="spacer"></span>
+          <span class="outcome pending" id="s2-outcome">—</span>
+        </div>
+        <div class="sim-foot"><p class="fig-foot" id="s2-foot"></p></div>
+      </div>
+    </figure>
+  </div>
+
+  <a class="next-link" href="#c6"><span class="eyebrow">Próximo</span> HTLC: um segredo e um relógio <span class="arrow">→</span></a>
+</section>
+
+<!-- ============================================================ CAP 6 -->
+<section class="chapter" id="c6" aria-labelledby="h-c6">
+  <div class="chapter-head reveal">
+    <div class="eyebrow"><span class="n">Capítulo 6</span> Solução 2 · <span class="tag tag-htlc">HTLC</span></div>
+    <h2 id="h-c6">Hashed Timelock Contract: sem coordenador. Um cadeado que abre com um segredo, e um prazo que devolve o ativo.</h2>
+    <p class="lede">Troca confiança por <strong>criptografia e tempo</strong>. Nasceu num fórum do Bitcoin em 2013; Herlihy formalizou em 2018.</p>
+  </div>
+
+  <div class="stack-lg">
+    <div class="cols cols-2">
+      <div class="prose reveal">
+        <p><strong>Hashlock.</strong> Alice sorteia um segredo <code>s</code> e publica só a impressão digital <code>H(s)</code>. O ativo só sai para quem mostrar <code>s</code>, e <strong>ao mostrar, o segredo fica escrito no livro</strong>. Revelar em uma rede habilita a outra.</p>
+        <p><strong>Timelock.</strong> Se ninguém abrir até o prazo, o ativo volta ao dono.</p>
+        <ol class="steps">
+          <li><strong>Alice publica <code>H(s)</code></strong><span>e guarda <code>s</code>.</span></li>
+          <li><strong>Alice tranca o título na Rede A</strong><span>para Bob, prazo <strong>T1</strong>.</span></li>
+          <li><strong>Bob tranca os tokens na Rede B</strong><span>com o mesmo <code>H(s)</code>, para Alice, prazo <strong>T2</strong>, menor.</span></li>
+          <li><strong>Alice abre a Rede B com <code>s</code></strong><span>e leva os tokens. O segredo vaza para o livro B.</span></li>
+          <li><strong>Bob lê <code>s</code> e abre a Rede A</strong><span>e leva o título.</span></li>
+        </ol>
+      </div>
+      <div class="prose reveal">
+        <h3>Por que T1 &gt; T2</h3>
+        <p>Alice revela primeiro; a partir daí Bob pode resgatar quando quiser. Com prazos iguais, Alice resgataria no último segundo e Bob não teria tempo na Rede A. O cadeado que Bob abre precisa durar mais, com folga.</p>
+        <div class="tl-explainer">
+          <div class="tl-row"><span class="who">Rede A · T1</span><div class="tl-track"><span class="t1"></span><span class="lbl" style="left:.2rem">cadeado de Alice (Bob abre)</span></div></div>
+          <div class="tl-row"><span class="who">Rede B · T2</span><div class="tl-track"><span class="t2"></span><span class="margin"></span><span class="lbl" style="left:.2rem">cadeado de Bob</span><span class="lbl" style="left:50%">folga para Bob agir</span></div></div>
+        </div>
+        <div class="callout">
+          <span class="eyebrow">O calcanhar de Aquiles</span>
+          O HTLC não elimina a confiança: <strong>desloca-a para uma hipótese sobre o tempo</strong>. Se um participante honesto não consegue agir dentro do prazo, a atomicidade pode quebrar sem má-fé de ninguém (Zakhary et al., 2020).
+        </div>
+      </div>
+    </div>
+
+    <figure class="figure reveal" id="sim-htlc">
+      <div class="figure-head">
+        <h4>Simulador: o HTLC em quatro situações</h4>
+        <span class="hint">Acompanhe a linha do tempo: T2 vence antes de T1.</span>
+      </div>
+      <div class="sim">
+        <div class="tabs" role="tablist" id="tabs-htlc">
+          <button class="tab" role="tab" aria-selected="true" data-scenario="ok">Sem falha</button>
+          <button class="tab" role="tab" aria-selected="false" data-scenario="nolock">Bob nunca tranca</button>
+          <button class="tab" role="tab" aria-selected="false" data-scenario="leak">Bob some depois que o segredo vazou</button>
+          <button class="tab" role="tab" aria-selected="false" data-scenario="delay">Atraso de rede consome a folga</button>
+        </div>
+        <div class="sim-stage" id="stage-htlc"></div>
+        <p class="narration idle" id="s6-say"><span class="step-n"></span><span>Pressione ▶ Reproduzir.</span></p>
+        <div class="controls">
+          <button class="btn btn-sm btn-primary" id="s6-play">▶ Reproduzir</button>
+          <button class="btn btn-sm" id="s6-step">Passo →</button>
+          <button class="btn btn-sm btn-ghost" id="s6-reset">Reiniciar</button>
+          <span class="spacer"></span>
+          <span class="outcome pending" id="s6-outcome">—</span>
+        </div>
+        <div class="sim-foot"><p class="fig-foot" id="s6-foot"></p></div>
+      </div>
+    </figure>
+  </div>
+
+  <a class="next-link" href="#c7"><span class="eyebrow">Próximo</span> Não há almoço grátis <span class="arrow">→</span></a>
+</section>
+
+<!-- ============================================================ CAP 7 -->
+<section class="chapter" id="c7" aria-labelledby="h-c7">
+  <div class="chapter-head reveal">
+    <div class="eyebrow"><span class="n">Capítulo 7</span> Comparação</div>
+    <h2 id="h-c7">Os dois protocolos empurram a fragilidade para lugares diferentes.</h2>
+    <p class="lede">O 2PC troca a hipótese temporal por confiança num coordenador. O HTLC troca o coordenador por uma hipótese temporal.</p>
+  </div>
+
+  <div class="stack-lg">
+    <div class="table-scroll reveal">
+      <table class="compare">
+        <thead><tr><th></th><th><span class="tag tag-htlc">HTLC</span></th><th><span class="tag tag-2pc">2PC</span></th></tr></thead>
+        <tbody>
+          <tr><td>Em quem se confia</td><td>Em ninguém: o segredo é o compromisso</td><td>No coordenador</td></tr>
+          <tr><td>O que se assume sobre o tempo</td><td><strong>Sincronia</strong>: mensagens e blocos dentro de um prazo conhecido</td><td>Nada: sem prazo, apenas bloqueia</td></tr>
+          <tr><td>Um participante cai</td><td>O prazo devolve o ativo</td><td>O coordenador aborta</td></tr>
+          <tr><td>O coordenador cai</td><td>Não existe coordenador</td><td><strong>Bloqueia</strong> até ele voltar ou um prazo vencer</td></tr>
+          <tr><td>Atraso além do prazo</td><td><strong>Pode violar</strong> a atomicidade</td><td>Só fica mais lento</td></tr>
+          <tr><td>O que custa</td><td>Capital preso pelo prazo inteiro; escritas em sequência</td><td>Um terceiro em quem confiar</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cols cols-text-fig">
+      <div class="prose reveal">
+        <h3>Onde a teoria não decide</h3>
+        <p>As comparações publicadas foram feitas <strong>pelos proponentes de uma das famílias</strong>, argumentando. Ninguém colocou as duas lado a lado, na mesma plataforma, sob as mesmas falhas, <strong>medindo</strong>. Foi o que fizemos.</p>
+      </div>
+      <figure class="figure reveal">
+        <div class="figure-head"><h4>A diferença, em um desenho</h4></div>
+        <svg viewBox="0 0 640 230" role="img" aria-label="Duas redes lado a lado. No 2PC, um coordenador externo se liga às duas. No HTLC, não há coordenador; um relógio com prazo se liga a cada rede e um segredo passa de uma para a outra.">
+          <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+          <g style="color: var(--body); font-family: var(--sans); fill: none; stroke: currentColor; stroke-width: 1.5">
+            <text x="150" y="22" text-anchor="middle" fill="var(--twopc)" stroke="none" font-weight="600" font-size="13" font-family="var(--mono)">2PC</text>
+            <rect x="110" y="40" width="80" height="34" rx="6" stroke="var(--twopc)"/>
+            <text x="150" y="62" text-anchor="middle" stroke="none" fill="var(--ink)" font-size="12">coordenador</text>
+            <rect x="30" y="150" width="90" height="44" rx="4"/><text x="75" y="176" text-anchor="middle" stroke="none" fill="var(--ink)" font-size="12">Rede A</text>
+            <rect x="180" y="150" width="90" height="44" rx="4"/><text x="225" y="176" text-anchor="middle" stroke="none" fill="var(--ink)" font-size="12">Rede B</text>
+            <path d="M135 74 L85 150" stroke="var(--twopc)" marker-end="url(#arr)" marker-start="url(#arr)"/>
+            <path d="M165 74 L215 150" stroke="var(--twopc)" marker-end="url(#arr)" marker-start="url(#arr)"/>
+            <text x="150" y="215" text-anchor="middle" stroke="none" fill="var(--muted)" font-size="11">acrescenta um terceiro em quem confiar</text>
+            <line x1="320" y1="20" x2="320" y2="210" stroke="var(--line)" stroke-dasharray="3 4"/>
+            <text x="480" y="22" text-anchor="middle" fill="var(--htlc)" stroke="none" font-weight="600" font-size="13" font-family="var(--mono)">HTLC</text>
+            <rect x="360" y="150" width="90" height="44" rx="4"/><text x="405" y="176" text-anchor="middle" stroke="none" fill="var(--ink)" font-size="12">Rede A</text>
+            <rect x="510" y="150" width="90" height="44" rx="4"/><text x="555" y="176" text-anchor="middle" stroke="none" fill="var(--ink)" font-size="12">Rede B</text>
+            <circle cx="405" cy="70" r="16" stroke="var(--htlc)"/><path d="M405 60v10h7" stroke="var(--htlc)"/>
+            <circle cx="555" cy="70" r="16" stroke="var(--htlc)"/><path d="M555 60v10h7" stroke="var(--htlc)"/>
+            <text x="405" y="107" text-anchor="middle" stroke="none" fill="var(--ink)" font-size="11">prazo T1</text>
+            <text x="555" y="107" text-anchor="middle" stroke="none" fill="var(--ink)" font-size="11">prazo T2</text>
+            <path d="M405 112 L405 150" stroke="var(--htlc)" marker-end="url(#arr)"/>
+            <path d="M555 112 L555 150" stroke="var(--htlc)" marker-end="url(#arr)"/>
+            <path d="M450 172 L510 172" stroke="var(--gold)" stroke-width="2" marker-end="url(#arr)"/>
+            <text x="480" y="164" text-anchor="middle" stroke="none" fill="var(--gold-ink)" font-size="10.5" font-family="var(--mono)">segredo s</text>
+            <text x="480" y="215" text-anchor="middle" stroke="none" fill="var(--muted)" font-size="11">acrescenta uma hipótese sobre o tempo</text>
+          </g>
+        </svg>
+        <figcaption class="fig-foot">O 2PC acrescenta um coordenador; o HTLC acrescenta relógios. Cada um remove uma fragilidade e instala outra.</figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <a class="next-link" href="#c8"><span class="eyebrow">Próximo</span> O laboratório: Hyperledger Fabric <span class="arrow">→</span></a>
+</section>
+
+<!-- ============================================================ CAP 8 -->
+<section class="chapter" id="c8" aria-labelledby="h-c8">
+  <div class="chapter-head reveal">
+    <div class="eyebrow"><span class="n">Capítulo 8</span> A plataforma</div>
+    <h2 id="h-c8">Hyperledger Fabric: uma blockchain para organizações, onde todo participante é conhecido.</h2>
+    <p class="lede">Onde montamos o laboratório. Três coisas sobre ele explicam os números.</p>
+  </div>
+
+  <div class="stack-lg">
+    <div class="cols cols-2">
+      <div class="prose reveal">
+        <p>Blockchain <strong>permissionada</strong>: identidades emitidas por uma autoridade certificadora. Os <strong>peers</strong> guardam o livro e executam o <em>chaincode</em>; o <strong>orderer</strong> ordena as transações e corta os blocos. Diferente do Bitcoin, a ordem é <strong>executar → ordenar → validar</strong>:</p>
+        <ol class="steps">
+          <li><strong>Executar</strong><span>Os peers simulam o contrato e devolvem o resultado assinado. Nada gravado ainda.</span></li>
+          <li><strong>Ordenar</strong><span>O orderer monta o bloco. Por padrão, espera até <strong>2 s</strong> para fechá-lo.</span></li>
+          <li><strong>Validar</strong><span>Os peers conferem as assinaturas e gravam no livro.</span></li>
+        </ol>
+      </div>
+      <div class="prose reveal">
+        <p>Usamos <strong>duas redes Fabric separadas</strong>, cada uma com peers, orderer e autoridade certificadora próprios. Não dois "canais" de uma rede, que compartilhariam o orderer: queremos derrubar uma sem tocar na outra.</p>
+        <p>Como enviamos uma transação por vez, o bloco nunca enche e o orderer sempre espera os 2 s inteiros. <strong>Toda escrita custa ~2 s; toda leitura, ~50 ms.</strong></p>
+      </div>
+    </div>
+
+    <figure class="figure reveal" id="sim-fabric">
+      <div class="figure-head">
+        <h4>Animação: o caminho de uma escrita no Fabric</h4>
+        <span class="hint">Repare no relógio do orderer.</span>
+      </div>
+      <div class="sim">
+        <div class="sim-stage" id="stage-fabric"></div>
+        <p class="narration idle" id="s8-say"><span class="step-n"></span><span>Pressione ▶ Reproduzir.</span></p>
+        <div class="controls">
+          <button class="btn btn-sm btn-primary" id="s8-play">▶ Reproduzir</button>
+          <button class="btn btn-sm" id="s8-step">Passo →</button>
+          <button class="btn btn-sm btn-ghost" id="s8-reset">Reiniciar</button>
+        </div>
+      </div>
+    </figure>
+
+    <div class="cards reveal">
+      <div class="card">
+        <span class="eyebrow">Restrição 1</span>
+        <h4>Um contrato não escreve em outra rede</h4>
+        <p>Logo, o coordenador do 2PC <strong>é um programa externo</strong>. Bom para nós: fácil de matar no ponto escolhido.</p>
+      </div>
+      <div class="card">
+        <span class="eyebrow">Restrição 2</span>
+        <h4>Nada dispara sozinho</h4>
+        <p>Não há temporizador no contrato. Um cadeado vencido <strong>continua trancado até alguém pedir a devolução</strong>.</p>
+      </div>
+      <div class="card">
+        <span class="eyebrow">Restrição 3</span>
+        <h4>A latência é o corte de bloco</h4>
+        <p>O que distingue os protocolos é <strong>quantas escritas ficam em sequência</strong>: HTLC, 4 em fila; 2PC, 4 em <strong>2 rodadas paralelas</strong>.</p>
+      </div>
+    </div>
+  </div>
+
+  <a class="next-link" href="#c9"><span class="eyebrow">Próximo</span> Treze maneiras de falhar <span class="arrow">→</span></a>
+</section>
+
+<!-- ============================================================ CAP 9 -->
+<section class="chapter" id="c9" aria-labelledby="h-c9">
+  <div class="chapter-head reveal">
+    <div class="eyebrow"><span class="n">Capítulo 9</span> O experimento</div>
+    <h2 id="h-c9">Mesma plataforma, mesmas falhas, dois protocolos. Treze cenários, dez repetições cada.</h2>
+    <p class="lede">O braço HTLC reaproveita a implementação de referência do Hyperledger Cacti/Weaver. O braço 2PC é nosso, com o vocabulário do padrão IETF SATP: não existe 2PC cross-chain público para o Fabric.</p>
+  </div>
+
+  <div class="stack-lg">
+    <div class="cols cols-3 reveal">
+      <div class="card">
+        <span class="eyebrow">Como derrubamos</span>
+        <h4>Quatro tipos de falha</h4>
+        <p>Queda de participante num passo escolhido. Queda do coordenador entre as fases. Atraso de rede de 800 ms (<code>tc/netem</code>). Relógio desregulado.</p>
+      </div>
+      <div class="card">
+        <span class="eyebrow">Como lemos</span>
+        <h4>Nos dois livros, nunca no cliente</h4>
+        <p>O harness lê o estado das <strong>duas redes</strong> e classifica com as quatro cores do capítulo 4.</p>
+      </div>
+      <div class="card">
+        <span class="eyebrow">O que medimos</span>
+        <h4>Três números</h4>
+        <p><strong>Latência</strong>, <strong>tempo com o ativo preso</strong> e <strong>escritas</strong> no livro. Mediana de 10 execuções.</p>
+      </div>
+    </div>
+
+    <figure class="figure reveal">
+      <div class="figure-head">
+        <h4>A matriz de cenários</h4>
+        <span class="hint">Clique numa linha. Rede A = rede 1 (título), Rede B = rede 2 (tokens).</span>
+      </div>
+      <div class="table-scroll">
+        <table class="matrix" id="matrix">
+          <thead><tr><th></th><th>Cenário</th><th>Protocolo</th><th>Situação</th><th>Esperado</th><th>Observado (N=10)</th></tr></thead>
+          <tbody id="matrix-body"></tbody>
+        </table>
+      </div>
+      <figcaption class="fig-foot">Nas <strong>130 execuções</strong>, o observado coincidiu com o esperado. Pares centrais: <strong>H3 × T3</strong> (mesma falha, respostas diferentes) e <strong>B2 × B3</strong> (de onde vem a vantagem do 2PC).</figcaption>
+    </figure>
+  </div>
+
+  <a class="next-link" href="#c10"><span class="eyebrow">Próximo</span> Resultados <span class="arrow">→</span></a>
+</section>
+
+<!-- ============================================================ CAP 10 -->
+<section class="chapter" id="c10" aria-labelledby="h-c10">
+  <div class="chapter-head reveal">
+    <div class="eyebrow"><span class="n">Capítulo 10</span> Resultados</div>
+    <h2 id="h-c10">Os dois protocolos quebram do mesmo jeito.</h2>
+    <p class="lede">Esperávamos que o HTLC violasse e o 2PC apenas bloqueasse. A primeira metade se confirmou. A segunda, não.</p>
+  </div>
+
+  <div class="stack-lg">
+    <div class="stats reveal">
+      <div class="stat"><span class="v" id="stat-runs">130</span><span class="l">execuções, 13 cenários × 10</span></div>
+      <div class="stat"><span class="v">2×</span><span class="l">mais rápido: 2PC paralelo vs HTLC</span></div>
+      <div class="stat"><span class="v">2</span><span class="l">cenários violaram: um de cada protocolo</span></div>
+      <div class="stat"><span class="v">0</span><span class="l">violações só por atraso ou relógio</span></div>
+    </div>
+
+    <div class="cols cols-text-fig">
+      <div class="prose reveal">
+        <h3>1. Sem falha</h3>
+        <p>Mesmas 4 escritas nos três cenários; o 2PC paralelo termina na metade do tempo. <strong>B3 é o controle:</strong> o 2PC forçado a uma rede por vez custa o mesmo que o HTLC. A vantagem é o paralelismo, não o protocolo. E o HTLC não pode paralelizar: o passo 5 depende do segredo do passo 4.</p>
+      </div>
+      <figure class="figure viz reveal" id="chart-latency">
+        <div class="figure-head"><h4>Latência do protocolo, sem falha</h4><span class="hint">mediana, em segundos</span></div>
+        <div class="legend"><span><i class="i-htlc"></i>HTLC</span><span><i class="i-2pc"></i>2PC</span></div>
+        <div class="bars" id="bars-latency"></div>
+        <div class="axis"><span></span><div class="ticks" id="axis-latency"></div><span></span></div>
+        <figcaption class="fig-foot">Desvio-padrão de 11 a 22 ms: a diferença de 2× está muito acima do ruído.</figcaption>
+      </figure>
+    </div>
+
+    <div class="cols cols-text-fig">
+      <div class="prose reveal">
+        <h3>2. Onde cada um quebra</h3>
+        <p><strong>H2</strong>: o HTLC viola quando o segredo já é público e a contraparte não resgata a tempo. <strong>T2</strong>: o 2PC bloqueia quando o coordenador morre entre as fases; em <strong>T2r</strong>, o diário durável recupera. <strong>T4</strong>: o 2PC <em>viola</em> quando o prazo dispara em um participante só.</p>
+        <div class="callout bad">
+          <span class="eyebrow">O achado central</span>
+          T4 não é defeito de implementação: é o que a válvula de escape custa. <strong>Sem</strong> prazo, o 2PC nunca viola, mas bloqueia para sempre. <strong>Com</strong> prazo, herda a dependência do tempo pela qual o HTLC é criticado.
+        </div>
+      </div>
+      <figure class="figure viz reveal">
+        <div class="figure-head"><h4>Desfecho por cenário</h4><span class="hint">10 de 10 execuções em cada</span></div>
+        <div class="legend"><span><i class="i-ok"></i>os dois efetivaram</span><span><i class="i-neutral"></i>nenhum efetivou</span><span><i class="i-blocked"></i>preso</span><span><i class="i-bad"></i>só um lado</span></div>
+        <div class="tiles" id="tiles-outcomes"></div>
+      </figure>
+    </div>
+
+    <div class="cols cols-text-fig">
+      <div class="prose reveal">
+        <h3>3. Mesma falha, preço diferente</h3>
+        <p><strong>H3 × T3</strong>, os mesmos 800 ms de atraso: o HTLC aborta com segurança (35 s de capital preso); o 2PC só demora mais (19 s em vez de 4) e efetiva. Sob atraso, <strong>o HTLC paga em vivacidade, o 2PC em desempenho</strong>. Nenhum viola.</p>
+        <h3>4. Relógio errado não é falha de segurança</h3>
+        <p><strong>X1</strong>: Bob com relógio adiantado recusa uma troca segura (65 s preso para nada). <strong>X2</strong>: com relógio atrasado, completa mesmo assim. O prazo é um valor absoluto lido do livro; a sincronia de que o HTLC depende é sobre <strong>atraso de mensagens e blocos</strong>, não sobre a hora do dia.</p>
+      </div>
+      <figure class="figure viz reveal" id="chart-blocking">
+        <div class="figure-head"><h4>Tempo com o ativo preso</h4><span class="hint">mediana, em segundos</span></div>
+        <div class="legend"><span><i class="i-htlc"></i>HTLC</span><span><i class="i-2pc"></i>2PC</span></div>
+        <div class="bars" id="bars-blocking"></div>
+        <div class="axis"><span></span><div class="ticks" id="axis-blocking"></div><span></span></div>
+        <figcaption class="fig-foot">T2 não tem fim: o ativo fica preso enquanto ninguém decidir.</figcaption>
+      </figure>
+    </div>
+
+    <div class="panel-ink reveal">
+      <span class="eyebrow">O que muda a hipótese</span>
+      <h3>O mecanismo que cada protocolo usa para comprar vivacidade é o que custa a segurança.</h3>
+      <p>No HTLC, o timelock. No 2PC, o aborto por prazo. <strong>Os dois quebram do mesmo jeito</strong>, pelo mesmo motivo. A escolha não é "segurança contra vivacidade": é <em>qual</em> custo de vivacidade se aceita pagar.</p>
+    </div>
+
+    <details class="reveal">
+      <summary>Ver a tabela completa de resultados</summary>
+      <div class="table-scroll" style="border:0">
+        <table id="results-table">
+          <thead><tr><th>Cen.</th><th>Prot.</th><th>Desfecho</th><th class="num">Latência (ms)</th><th class="num">Bloqueio (s)</th><th class="num">Escritas</th><th class="num">N</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="fig-foot">Medianas. N = 10 mostra que cada desfecho é <strong>reprodutível</strong>; as proporções refletem a matriz escolhida, não taxas naturais de falha.</p>
+    </details>
+  </div>
+
+  <a class="next-link" href="#c11"><span class="eyebrow">Próximo</span> O que fica <span class="arrow">→</span></a>
+</section>
+
+<!-- ============================================================ CAP 11 -->
+<section class="chapter" id="c11" aria-labelledby="h-c11">
+  <div class="chapter-head reveal">
+    <div class="eyebrow"><span class="n">Capítulo 11</span> Conclusão</div>
+    <h2 id="h-c11">A escolha não é segurança contra vivacidade. É qual custo de vivacidade você aceita.</h2>
+  </div>
+
+  <div class="stack-lg">
+    <div class="cards reveal">
+      <div class="card">
+        <span class="eyebrow">1</span>
+        <h4>Os dois preservam a atomicidade enquanto suas hipóteses de tempo valem</h4>
+        <p>Atraso e relógio errado custaram tempo e capital preso, não segurança.</p>
+      </div>
+      <div class="card">
+        <span class="eyebrow">2</span>
+        <h4>Os dois a violam quando um prazo dispara em um lado só</h4>
+        <p>H2 e T4 são a mesma cena com atores diferentes.</p>
+      </div>
+      <div class="card">
+        <span class="eyebrow">3</span>
+        <h4>O que sobra é o tipo de bloqueio</h4>
+        <p>Indefinido (2PC sem prazo) ou o risco de um prazo desigual (HTLC, ou 2PC com prazo).</p>
+      </div>
+    </div>
+
+    <div class="cols cols-2">
+      <div class="prose reveal">
+        <h3>Limites do que medimos</h3>
+        <ul>
+          <li><strong>Uma máquina só.</strong> Atraso injetado; o que se transfere são as razões entre os braços, não os tempos absolutos.</li>
+          <li><strong>Uma organização e um peer por rede.</strong> Sem concorrência.</li>
+          <li><strong>Quedas são pontos de parada no cliente</strong>, equivalentes sob crash.</li>
+          <li><strong>O 2PC é nosso</strong> e o HTLC é o do Weaver: um desenho de cada família, não a família.</li>
+        </ul>
+      </div>
+      <div class="prose reveal">
+        <h3>Para onde isso vai</h3>
+        <p>Um coordenador <strong>replicado</strong> (Paxos Commit) como terceiro braço; concorrência; e o efeito do tempo de corte de bloco.</p>
+        <p>Código, cenários e dados estão no repositório. Um comando sobe as duas redes e roda a matriz.</p>
+        <p><a href="https://github.com/diogenesdie/fabric-atomic-swap-study">github.com/diogenesdie/fabric-atomic-swap-study</a></p>
+      </div>
+    </div>
+  </div>
+
+  <a class="next-link" href="#c12"><span class="eyebrow">Próximo</span> Referências e glossário <span class="arrow">→</span></a>
+</section>
+
+<!-- ============================================================ CAP 12 -->
+<section class="chapter" id="c12" aria-labelledby="h-c12">
+  <div class="chapter-head reveal">
+    <div class="eyebrow"><span class="n">Capítulo 12</span> Referências e glossário</div>
+    <h2 id="h-c12">De onde vêm as ideias.</h2>
+  </div>
+
+  <div class="stack-lg">
+    <div class="refs cols cols-2 reveal">
+      <div class="stack">
+        <div>
+          <h4>Commit atômico e 2PC</h4>
+          <ul>
+            <li><b>GRAY, J.</b> Notes on Data Base Operating Systems. In: <em>Operating Systems: An Advanced Course</em>. Springer, 1978.</li>
+            <li><b>SKEEN, D.</b> Nonblocking Commit Protocols. In: ACM SIGMOD, 1981.</li>
+            <li><b>BERNSTEIN, P.; HADZILACOS, V.; GOODMAN, N.</b> Concurrency Control and Recovery in Database Systems. Addison-Wesley, 1987, cap. 7.</li>
+            <li><b>GRAY, J.; LAMPORT, L.</b> Consensus on Transaction Commit. ACM Transactions on Database Systems, v. 31, n. 1, 2006.</li>
+            <li><b>ZAKHARY, V.; AGRAWAL, D.; EL ABBADI, A.</b> Atomic Commitment Across Blockchains. Proc. VLDB Endowment, v. 13, n. 9, p. 1319–1331, 2020. A referência principal.</li>
+            <li><b>LU, H.; JAJOO, A.; NAMJOSHI, K. S.</b> A Two-Phase Protocol for Atomic Multi-Chain Transactions. In: ACM DIN, 2024, p. 21–27.</li>
+          </ul>
+        </div>
+        <div>
+          <h4>HTLC</h4>
+          <ul>
+            <li><b>NOLAN, T.</b> Alt chains and atomic transfers. Fórum Bitcointalk, 2013.</li>
+            <li><b>HERLIHY, M.</b> Atomic Cross-Chain Swaps. In: ACM PODC, 2018. arXiv:1801.09515.</li>
+            <li><b>HERLIHY, M.; LISKOV, B.; SHRIRA, L.</b> Cross-chain deals and adversarial commerce. The VLDB Journal, v. 31, n. 6, p. 1291–1309, 2022.</li>
+            <li><b>XUE, Y.; HERLIHY, M.</b> Hedging Against Sore Loser Attacks in Cross-Chain Transactions. In: ACM PODC, 2021.</li>
+            <li><b>TSABARY, I. et al.</b> MAD-HTLC: Because HTLC is Crazy-Cheap to Attack. In: IEEE Symposium on Security and Privacy, 2021.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="stack">
+        <div>
+          <h4>Comparação e posicionamento</h4>
+          <ul>
+            <li><b>ENGEL, D.; HERLIHY, M.; XUE, Y.</b> Failure is (literally) an Option: Atomic Commitment vs Optionality in Decentralized Finance. In: SSS, 2021.</li>
+            <li><b>ZAMYATIN, A. et al.</b> SoK: Communication Across Distributed Ledgers. In: Financial Cryptography and Data Security, 2021.</li>
+            <li><b>TAO, Y.; LI, B.; LI, B.</b> On Atomicity and Confidentiality Across Blockchains Under Failures. IEEE Transactions on Knowledge and Data Engineering, v. 36, n. 2, 2024.</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Padrão e implementação</h4>
+          <ul>
+            <li><b>IETF.</b> Secure Asset Transfer Protocol (SATP) Core. Internet-Draft draft-ietf-satp-core-16, 2026.</li>
+            <li><b>HYPERLEDGER CACTI</b> (incorporando Weaver). github.com/hyperledger-cacti/cacti</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Plataforma e metodologia</h4>
+          <ul>
+            <li><b>ANDROULAKI, E. et al.</b> Hyperledger Fabric: A Distributed Operating System for Permissioned Blockchains. In: EuroSys, 2018.</li>
+            <li><b>THAKKAR, P.; NATHAN, S.; VISWANATHAN, B.</b> Performance Benchmarking and Optimizing Hyperledger Fabric Blockchain Platform. In: IEEE MASCOTS, 2018.</li>
+            <li><b>HAJDU, Á. et al.</b> Using Fault Injection to Assess Blockchain Systems in Presence of Faulty Smart Contracts. IEEE Access, v. 8, 2020.</li>
+            <li><b>HYPERLEDGER FABRIC.</b> Documentação oficial, v2.5. hyperledger-fabric.readthedocs.io</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <p class="fig-foot reveal">Entradas completas, com DOI, em <code>docs/paper/refs.bib</code>, conferidas contra Crossref, DBLP e arXiv.</p>
+
+    <details class="glossary reveal">
+      <summary>Glossário rápido</summary>
+      <dl>
+        <dt>Blockchain</dt><dd>Livro de registros copiado em vários computadores, em blocos encadeados pelo hash do anterior.</dd>
+        <dt>Bloco</dt><dd>Conjunto de transações fechado de uma vez. No Fabric, um a cada 2 s por padrão.</dd>
+        <dt>Hash</dt><dd>Impressão digital de um conteúdo: muda por completo se qualquer parte mudar.</dd>
+        <dt>Contrato inteligente</dt><dd>Programa guardado no livro, executado por todos os nós igual. No Fabric, <em>chaincode</em>.</dd>
+        <dt>Nó / peer</dt><dd>Computador que guarda uma cópia do livro e executa contratos.</dd>
+        <dt>Orderer</dt><dd>No Fabric, quem ordena as transações e corta os blocos.</dd>
+        <dt>Cross-chain</dt><dd>Operação que envolve duas ou mais blockchains independentes.</dd>
+        <dt>Atomicidade</dt><dd>Ou tudo acontece, ou nada acontece.</dd>
+        <dt>Segurança</dt><dd>A coisa errada nunca acontece. Aqui: nunca só um lado efetiva.</dd>
+        <dt>Vivacidade</dt><dd>Alguma coisa acaba acontecendo. Aqui: a troca termina em tempo finito.</dd>
+        <dt>Coordenador</dt><dd>No 2PC, quem pergunta, decide e comunica. Aqui, um programa fora das blockchains.</dd>
+        <dt>Custódia (escrow)</dt><dd>O ativo fica reservado: o dono não pode mexer, o novo dono ainda não recebeu.</dd>
+        <dt>Diário durável (log)</dt><dd>Registro em disco que o coordenador escreve antes de agir, para retomar após uma queda.</dd>
+        <dt>Hashlock</dt><dd>Cadeado que só abre para quem apresentar o segredo cuja impressão digital foi publicada.</dd>
+        <dt>Timelock</dt><dd>Prazo após o qual o ativo trancado pode voltar ao dono.</dd>
+      </dl>
+    </details>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <span>Seminário · Plataformas Computacionais para Sistemas Distribuídos · PPGCC/PUCRS · 2026/2</span>
+  <span>Números gerados de <code>experiments/results/aggregated.csv</code> · <a href="#top">voltar ao início ↑</a></span>
+</footer>
+
+</div>
+</main>
+
+<script src="assets/results-data.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/sims.js"></script>
+<script src="assets/charts.js"></script>
+</body>
+</html>
