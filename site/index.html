@@ -71,6 +71,7 @@
     <div class="hero-meta">
       <span><b>Equipe</b> Diógenes Dietrich de Morais · José Francisco Dias Venturini · Pedro Augusto Pereira</span>
       <span><b>Orientação</b> Prof. Fernando Luís Dotti</span>
+      <span><b>Procedência</b> cada capítulo é marcado <span class="src src-lit">da literatura</span> ou <span class="src src-ours">nosso experimento</span>, e cada afirmação cita a fonte — as citações levam ao capítulo 12.</span>
     </div>
   </div>
 
@@ -91,17 +92,17 @@
 <!-- ============================================================ CAP 1 -->
 <section class="chapter" id="c1" aria-labelledby="h-c1">
   <div class="chapter-head reveal">
-    <div class="eyebrow"><span class="n">Capítulo 1</span> Blockchain</div>
+    <div class="eyebrow"><span class="n">Capítulo 1</span> Blockchain <span class="src src-lit">da literatura</span></div>
     <h2 id="h-c1">Uma blockchain é um livro-caixa copiado em muitos computadores, onde ninguém apaga o passado.</h2>
   </div>
 
   <div class="cols cols-text-fig">
     <div class="prose reveal">
-      <p>Cada linha registra quem transferiu o quê para quem. O livro é copiado em vários computadores, os <strong>nós</strong>, e as linhas são agrupadas em <strong>blocos</strong>. Cada bloco guarda a <strong>impressão digital</strong> (o <em>hash</em>) do anterior: mudar um bloco antigo faz todos os seguintes deixarem de bater, e qualquer nó percebe.</p>
-      <p>Quem decide o próximo bloco é uma regra de <strong>consenso</strong> entre os nós. Em redes <strong>permissionadas</strong>, como a do experimento, os participantes são conhecidos.</p>
+      <p>Cada linha registra quem transferiu o quê para quem. O livro é copiado em vários computadores, os <strong>nós</strong>, e as linhas são agrupadas em <strong>blocos</strong>. Cada bloco guarda a <strong>impressão digital</strong> (o <em>hash</em>) do anterior: mudar um bloco antigo faz todos os seguintes deixarem de bater, e qualquer nó percebe <a class="cite" href="#ref-fabric-docs">(Hyperledger Fabric, v2.5)</a>.</p>
+      <p>Quem decide o próximo bloco é uma regra de <strong>consenso</strong> entre os nós. Em redes <strong>permissionadas</strong>, como a do experimento, os participantes são conhecidos <a class="cite" href="#ref-androulaki-2018">(Androulaki et al., 2018)</a>.</p>
       <div class="callout">
         <span class="eyebrow">Guarde isto</span>
-        O livro só sabe do que acontece <strong>dentro</strong> dele. Essa cegueira é a raiz do problema deste seminário.
+        O livro só sabe do que acontece <strong>dentro</strong> dele <a class="cite" href="#ref-zamyatin-2021">(Zamyatin et al., 2021)</a>. Essa cegueira é a raiz do problema deste seminário.
       </div>
     </div>
 
@@ -126,17 +127,17 @@
 <!-- ============================================================ CAP 2 -->
 <section class="chapter" id="c2" aria-labelledby="h-c2">
   <div class="chapter-head reveal">
-    <div class="eyebrow"><span class="n">Capítulo 2</span> Contratos inteligentes</div>
+    <div class="eyebrow"><span class="n">Capítulo 2</span> Contratos inteligentes <span class="src src-lit">da literatura</span></div>
     <h2 id="h-c2">Um contrato inteligente é uma regra escrita no livro, que todos os nós executam do mesmo jeito.</h2>
   </div>
 
   <div class="cols cols-text-fig">
     <div class="prose reveal">
-      <p>É a <strong>máquina de venda automática</strong>: moeda entra, produto sai, sem atendente. A regra vive no livro, todos os nós a executam sobre o mesmo estado, e só o resultado unânime vira registro. No Hyperledger Fabric, chama-se <em>chaincode</em>.</p>
+      <p>É a <strong>máquina de venda automática</strong>: moeda entra, produto sai, sem atendente. A regra vive no livro, todos os nós a executam sobre o mesmo estado, e só o resultado unânime vira registro. No Hyperledger Fabric, chama-se <em>chaincode</em> <a class="cite" href="#ref-androulaki-2018">(Androulaki et al., 2018)</a>.</p>
       <p>Duas limitações que voltam nos capítulos 5, 6 e 8:</p>
       <ul>
-        <li><strong>O contrato não tem relógio.</strong> O horário chega carimbado no pedido; o contrato só compara.</li>
-        <li><strong>O contrato não enxerga outras blockchains.</strong> Só lê e escreve no próprio livro.</li>
+        <li><strong>O contrato não tem relógio.</strong> O horário chega carimbado no pedido; o contrato só compara <a class="cite" href="#ref-fabric-docs">(Hyperledger Fabric, v2.5)</a>.</li>
+        <li><strong>O contrato não enxerga outras blockchains.</strong> Só lê e escreve no próprio livro <a class="cite" href="#ref-herlihy-2018">(Herlihy, 2018)</a>.</li>
       </ul>
     </div>
 
@@ -173,7 +174,7 @@
 <!-- ============================================================ CAP 3 -->
 <section class="chapter" id="c3" aria-labelledby="h-c3">
   <div class="chapter-head reveal">
-    <div class="eyebrow"><span class="n">Capítulo 3</span> O problema cross-chain</div>
+    <div class="eyebrow"><span class="n">Capítulo 3</span> O problema cross-chain <span class="src src-lit">da literatura</span></div>
     <h2 id="h-c3">Cada blockchain é uma ilha. Trocar algo entre duas ilhas é o problema.</h2>
     <p class="lede">Alice tem um <strong>título</strong> na Rede A. Bob tem <strong>tokens</strong> na Rede B. Eles querem trocar.</p>
   </div>
@@ -181,11 +182,11 @@
   <div class="stack-lg">
     <div class="cols cols-2 reveal">
       <div class="prose">
-        <p>Não existe livro que cubra as duas redes, então <strong>alguém precisa se mover primeiro</strong>. E quem se move primeiro fica exposto. É vender um carro para um desconhecido em outra cidade: quem entrega antes, o carro ou o dinheiro?</p>
+        <p>Não existe livro que cubra as duas redes, então <strong>alguém precisa se mover primeiro</strong>. E quem se move primeiro fica exposto <a class="cite" href="#ref-herlihy-2018">(Herlihy, 2018)</a>. É vender um carro para um desconhecido em outra cidade: quem entrega antes, o carro ou o dinheiro? A literatura chama isso de comércio adversarial <a class="cite" href="#ref-herlihy-2022">(Herlihy et al., 2022)</a>.</p>
       </div>
       <div class="callout bad">
         <span class="eyebrow">O que queremos evitar</span>
-        A <strong>efetivação parcial</strong>: só um lado da troca acontece. Alguém fica com os dois ativos.
+        A <strong>efetivação parcial</strong>: só um lado da troca acontece. Alguém fica com os dois ativos <a class="cite" href="#ref-zakhary-2020">(Zakhary et al., 2020)</a>.
       </div>
     </div>
 
@@ -214,9 +215,9 @@
 <!-- ============================================================ CAP 4 -->
 <section class="chapter" id="c4" aria-labelledby="h-c4">
   <div class="chapter-head reveal">
-    <div class="eyebrow"><span class="n">Capítulo 4</span> Atomicidade</div>
+    <div class="eyebrow"><span class="n">Capítulo 4</span> Atomicidade <span class="src src-lit">da literatura</span></div>
     <h2 id="h-c4">Atomicidade: ou os dois livros mudam, ou nenhum muda.</h2>
-    <p class="lede">Isso dá exatamente quatro finais possíveis. As quatro cores acompanham o seminário até o fim.</p>
+    <p class="lede">Isso dá exatamente quatro finais possíveis. As quatro cores acompanham o seminário até o fim <span class="src src-ours">classificação nossa</span>.</p>
   </div>
 
   <div class="stack-lg">
@@ -245,8 +246,8 @@
 
     <div class="cols cols-text-fig">
       <div class="prose reveal">
-        <p><strong>Segurança</strong>: a coisa errada nunca acontece. <strong>Vivacidade</strong>: alguma coisa acaba acontecendo. Todo protocolo deste seminário troca uma pela outra.</p>
-        <p><strong>Atomicidade não é consenso.</strong> Consenso decide por maioria. Commit atômico exige unanimidade: um único "não" aborta tudo. É mais forte, e por isso mais frágil a falhas.</p>
+        <p><strong>Segurança</strong>: a coisa errada nunca acontece. <strong>Vivacidade</strong>: alguma coisa acaba acontecendo. Todo protocolo deste seminário troca uma pela outra <a class="cite" href="#ref-bernstein-1987">(Bernstein et al., 1987)</a>.</p>
+        <p><strong>Atomicidade não é consenso.</strong> Consenso decide por maioria. Commit atômico exige unanimidade: um único "não" aborta tudo <a class="cite" href="#ref-gray-lamport-2006">(Gray &amp; Lamport, 2006)</a>. É mais forte, e por isso mais frágil a falhas.</p>
       </div>
 
       <figure class="figure reveal" id="vote-demo">
@@ -274,9 +275,9 @@
 <!-- ============================================================ CAP 5 -->
 <section class="chapter" id="c5" aria-labelledby="h-c5">
   <div class="chapter-head reveal">
-    <div class="eyebrow"><span class="n">Capítulo 5</span> Solução 1 · <span class="tag tag-2pc">2PC</span></div>
+    <div class="eyebrow"><span class="n">Capítulo 5</span> Solução 1 · <span class="tag tag-2pc">2PC</span> <span class="src src-lit">da literatura</span></div>
     <h2 id="h-c5">Two-Phase Commit: primeiro todo mundo promete, depois todo mundo cumpre.</h2>
-    <p class="lede">A resposta clássica dos bancos de dados (Gray, 1978): um <strong>coordenador</strong> pergunta antes de mandar fazer. Como reservar voo e hotel: confirma os dois só depois que os dois disseram que têm vaga.</p>
+    <p class="lede">A resposta clássica dos bancos de dados <a class="cite" href="#ref-gray-1978">(Gray, 1978)</a>: um <strong>coordenador</strong> pergunta antes de mandar fazer. Como reservar voo e hotel: confirma os dois só depois que os dois disseram que têm vaga.</p>
   </div>
 
   <div class="stack-lg">
@@ -284,13 +285,13 @@
       <div class="prose reveal">
         <ol class="steps">
           <li><strong>Preparo: "consegue?"</strong><span>Cada rede põe o ativo em <strong>custódia</strong>, anota no livro e responde SIM ou NÃO. Quem diz SIM não pode mais desistir sozinho.</span></li>
-          <li><strong>Decisão: "então faça"</strong><span>Todos SIM? O coordenador <strong>grava a decisão no diário</strong> e manda EFETIVAR. Algum NÃO? Manda ABORTAR. Gravar antes de mandar é o que permite retomar após uma queda.</span></li>
+          <li><strong>Decisão: "então faça"</strong><span>Todos SIM? O coordenador <strong>grava a decisão no diário</strong> e manda EFETIVAR. Algum NÃO? Manda ABORTAR. Gravar antes de mandar é o que permite retomar após uma queda <a class="cite" href="#ref-bernstein-1987">(Bernstein et al., 1987)</a>.</span></li>
         </ol>
       </div>
       <div class="prose reveal">
         <h3>O ponto fraco: o coordenador</h3>
-        <p>Se ele cai <strong>entre as fases</strong>, as redes que disseram SIM não podem efetivar (e se a outra disse NÃO?) nem desistir (e se a decisão foi efetivar?). Só podem <strong>esperar</strong>, com os ativos presos. É o <strong>bloqueio</strong> do 2PC, e Skeen (1981) provou que nenhum protocolo de commit escapa dele sob partição.</p>
-        <p>Cross-chain, o coordenador é um <strong>programa externo</strong>, porque um contrato não enxerga outra rede. Para não travar para sempre, cada rede ganha um <strong>prazo</strong> para desistir sozinha. Guarde essa válvula.</p>
+        <p>Se ele cai <strong>entre as fases</strong>, as redes que disseram SIM não podem efetivar (e se a outra disse NÃO?) nem desistir (e se a decisão foi efetivar?). Só podem <strong>esperar</strong>, com os ativos presos. É o <strong>bloqueio</strong> do 2PC, e <a class="cite" href="#ref-skeen-1981">Skeen (1981)</a> provou que nenhum protocolo de commit escapa dele sob partição.</p>
+        <p>Cross-chain, o coordenador é um <strong>programa externo</strong>, porque um contrato não enxerga outra rede (<a class="cite" href="#ref-zakhary-2020">Zakhary et al., 2020</a>; <a class="cite" href="#ref-lu-2024">Lu et al., 2024</a>). Para não travar para sempre, cada rede ganha um <strong>prazo</strong> para desistir sozinha. Guarde essa válvula.</p>
       </div>
     </div>
 
@@ -327,9 +328,9 @@
 <!-- ============================================================ CAP 6 -->
 <section class="chapter" id="c6" aria-labelledby="h-c6">
   <div class="chapter-head reveal">
-    <div class="eyebrow"><span class="n">Capítulo 6</span> Solução 2 · <span class="tag tag-htlc">HTLC</span></div>
+    <div class="eyebrow"><span class="n">Capítulo 6</span> Solução 2 · <span class="tag tag-htlc">HTLC</span> <span class="src src-lit">da literatura</span></div>
     <h2 id="h-c6">Hashed Timelock Contract: sem coordenador. Um cadeado que abre com um segredo, e um prazo que devolve o ativo.</h2>
-    <p class="lede">Troca confiança por <strong>criptografia e tempo</strong>. Nasceu num fórum do Bitcoin em 2013; Herlihy formalizou em 2018.</p>
+    <p class="lede">Troca confiança por <strong>criptografia e tempo</strong>. Nasceu num fórum do Bitcoin em 2013 <a class="cite" href="#ref-nolan-2013">(Nolan, 2013)</a>; <a class="cite" href="#ref-herlihy-2018">Herlihy (2018)</a> formalizou.</p>
   </div>
 
   <div class="stack-lg">
@@ -347,14 +348,14 @@
       </div>
       <div class="prose reveal">
         <h3>Por que T1 &gt; T2</h3>
-        <p>Alice revela primeiro; a partir daí Bob pode resgatar quando quiser. Com prazos iguais, Alice resgataria no último segundo e Bob não teria tempo na Rede A. O cadeado que Bob abre precisa durar mais, com folga.</p>
+        <p>Alice revela primeiro; a partir daí Bob pode resgatar quando quiser. Com prazos iguais, Alice resgataria no último segundo e Bob não teria tempo na Rede A. O cadeado que Bob abre precisa durar mais, com folga <a class="cite" href="#ref-herlihy-2018">(Herlihy, 2018)</a>.</p>
         <div class="tl-explainer">
           <div class="tl-row"><span class="who">Rede A · T1</span><div class="tl-track"><span class="t1"></span><span class="lbl" style="left:.2rem">cadeado de Alice (Bob abre)</span></div></div>
           <div class="tl-row"><span class="who">Rede B · T2</span><div class="tl-track"><span class="t2"></span><span class="margin"></span><span class="lbl" style="left:.2rem">cadeado de Bob</span><span class="lbl" style="left:50%">folga para Bob agir</span></div></div>
         </div>
         <div class="callout">
           <span class="eyebrow">O calcanhar de Aquiles</span>
-          O HTLC não elimina a confiança: <strong>desloca-a para uma hipótese sobre o tempo</strong>. Se um participante honesto não consegue agir dentro do prazo, a atomicidade pode quebrar sem má-fé de ninguém (Zakhary et al., 2020).
+          O HTLC não elimina a confiança: <strong>desloca-a para uma hipótese sobre o tempo</strong>. Se um participante honesto não consegue agir dentro do prazo, a atomicidade pode quebrar sem má-fé de ninguém <a class="cite" href="#ref-zakhary-2020">(Zakhary et al., 2020)</a>. O capital fica preso pelo prazo inteiro <a class="cite" href="#ref-xue-2021">(Xue &amp; Herlihy, 2021)</a>; com má-fé, há ataques ainda mais baratos <a class="cite" href="#ref-tsabary-2021">(Tsabary et al., 2021)</a>.
         </div>
       </div>
     </div>
@@ -391,7 +392,7 @@
 <!-- ============================================================ CAP 7 -->
 <section class="chapter" id="c7" aria-labelledby="h-c7">
   <div class="chapter-head reveal">
-    <div class="eyebrow"><span class="n">Capítulo 7</span> Comparação</div>
+    <div class="eyebrow"><span class="n">Capítulo 7</span> Comparação <span class="src src-lit">da literatura</span> <span class="src src-ours">+ a lacuna que apontamos</span></div>
     <h2 id="h-c7">Os dois protocolos empurram a fragilidade para lugares diferentes.</h2>
     <p class="lede">O 2PC troca a hipótese temporal por confiança num coordenador. O HTLC troca o coordenador por uma hipótese temporal.</p>
   </div>
@@ -410,11 +411,12 @@
         </tbody>
       </table>
     </div>
+    <p class="fig-foot reveal">Síntese da literatura, linha a linha: confiança e prazos <a class="cite" href="#ref-herlihy-2018">(Herlihy, 2018)</a>; bloqueio do coordenador <a class="cite" href="#ref-skeen-1981">(Skeen, 1981)</a>; violação por atraso <a class="cite" href="#ref-zakhary-2020">(Zakhary et al., 2020)</a>; capital preso <a class="cite" href="#ref-xue-2021">(Xue &amp; Herlihy, 2021)</a>.</p>
 
     <div class="cols cols-text-fig">
       <div class="prose reveal">
-        <h3>Onde a teoria não decide</h3>
-        <p>As comparações publicadas foram feitas <strong>pelos proponentes de uma das famílias</strong>, argumentando. Ninguém colocou as duas lado a lado, na mesma plataforma, sob as mesmas falhas, <strong>medindo</strong>. Foi o que fizemos.</p>
+        <h3>Onde a teoria não decide <span class="src src-ours">posicionamento nosso</span></h3>
+        <p>As comparações publicadas foram feitas <strong>pelos proponentes de uma das famílias</strong>, argumentando — <a class="cite" href="#ref-zakhary-2020">Zakhary et al. (2020)</a> criticam o HTLC para motivar seu 2PC; <a class="cite" href="#ref-engel-2021">Engel et al. (2021)</a> fazem o caminho inverso. E quem mede, mede o protocolo que propõe <a class="cite" href="#ref-tao-2024">(Tao et al., 2024)</a>. Ninguém colocou as duas famílias lado a lado, na mesma plataforma, sob as mesmas falhas, <strong>medindo</strong>. Foi o que fizemos.</p>
       </div>
       <figure class="figure reveal">
         <div class="figure-head"><h4>A diferença, em um desenho</h4></div>
@@ -455,7 +457,7 @@
 <!-- ============================================================ CAP 8 -->
 <section class="chapter" id="c8" aria-labelledby="h-c8">
   <div class="chapter-head reveal">
-    <div class="eyebrow"><span class="n">Capítulo 8</span> A plataforma</div>
+    <div class="eyebrow"><span class="n">Capítulo 8</span> A plataforma <span class="src src-lit">da literatura</span> <span class="src src-ours">+ decisões nossas</span></div>
     <h2 id="h-c8">Hyperledger Fabric: uma blockchain para organizações, onde todo participante é conhecido.</h2>
     <p class="lede">Onde montamos o laboratório. Três coisas sobre ele explicam os números.</p>
   </div>
@@ -463,16 +465,16 @@
   <div class="stack-lg">
     <div class="cols cols-2">
       <div class="prose reveal">
-        <p>Blockchain <strong>permissionada</strong>: identidades emitidas por uma autoridade certificadora. Os <strong>peers</strong> guardam o livro e executam o <em>chaincode</em>; o <strong>orderer</strong> ordena as transações e corta os blocos. Diferente do Bitcoin, a ordem é <strong>executar → ordenar → validar</strong>:</p>
+        <p>Blockchain <strong>permissionada</strong>: identidades emitidas por uma autoridade certificadora. Os <strong>peers</strong> guardam o livro e executam o <em>chaincode</em>; o <strong>orderer</strong> ordena as transações e corta os blocos. Diferente do Bitcoin, a ordem é <strong>executar → ordenar → validar</strong> <a class="cite" href="#ref-androulaki-2018">(Androulaki et al., 2018)</a>:</p>
         <ol class="steps">
           <li><strong>Executar</strong><span>Os peers simulam o contrato e devolvem o resultado assinado. Nada gravado ainda.</span></li>
-          <li><strong>Ordenar</strong><span>O orderer monta o bloco. Por padrão, espera até <strong>2 s</strong> para fechá-lo.</span></li>
+          <li><strong>Ordenar</strong><span>O orderer monta o bloco. Por padrão, espera até <strong>2 s</strong> para fechá-lo <a class="cite" href="#ref-fabric-docs">(Hyperledger Fabric, v2.5)</a>.</span></li>
           <li><strong>Validar</strong><span>Os peers conferem as assinaturas e gravam no livro.</span></li>
         </ol>
       </div>
       <div class="prose reveal">
-        <p>Usamos <strong>duas redes Fabric separadas</strong>, cada uma com peers, orderer e autoridade certificadora próprios. Não dois "canais" de uma rede, que compartilhariam o orderer: queremos derrubar uma sem tocar na outra.</p>
-        <p>Como enviamos uma transação por vez, o bloco nunca enche e o orderer sempre espera os 2 s inteiros. <strong>Toda escrita custa ~2 s; toda leitura, ~50 ms.</strong></p>
+        <p><span class="src src-ours">decisão nossa</span> Usamos <strong>duas redes Fabric separadas</strong>, cada uma com peers, orderer e autoridade certificadora próprios. Não dois "canais" de uma rede, que compartilhariam o orderer: queremos derrubar uma sem tocar na outra.</p>
+        <p><span class="src src-ours">medido por nós</span> Como enviamos uma transação por vez, o bloco nunca enche e o orderer sempre espera os 2 s inteiros. <strong>Toda escrita custa ~2 s; toda leitura, ~50 ms</strong> — o domínio do corte de bloco sobre a latência é conhecido <a class="cite" href="#ref-thakkar-2018">(Thakkar et al., 2018)</a>.</p>
       </div>
     </div>
 
@@ -501,10 +503,10 @@
       <div class="card">
         <span class="eyebrow">Restrição 2</span>
         <h4>Nada dispara sozinho</h4>
-        <p>Não há temporizador no contrato. Um cadeado vencido <strong>continua trancado até alguém pedir a devolução</strong>.</p>
+        <p>Não há temporizador no contrato. Um cadeado vencido <strong>continua trancado até alguém pedir a devolução</strong> <a class="cite" href="#ref-fabric-docs">(Hyperledger Fabric, v2.5)</a>.</p>
       </div>
       <div class="card">
-        <span class="eyebrow">Restrição 3</span>
+        <span class="eyebrow">Restrição 3 <span class="src src-ours">análise nossa</span></span>
         <h4>A latência é o corte de bloco</h4>
         <p>O que distingue os protocolos é <strong>quantas escritas ficam em sequência</strong>: HTLC, 4 em fila; 2PC, 4 em <strong>2 rodadas paralelas</strong>.</p>
       </div>
@@ -517,9 +519,9 @@
 <!-- ============================================================ CAP 9 -->
 <section class="chapter" id="c9" aria-labelledby="h-c9">
   <div class="chapter-head reveal">
-    <div class="eyebrow"><span class="n">Capítulo 9</span> O experimento</div>
+    <div class="eyebrow"><span class="n">Capítulo 9</span> O experimento <span class="src src-ours">nosso experimento</span></div>
     <h2 id="h-c9">Mesma plataforma, mesmas falhas, dois protocolos. Treze cenários, dez repetições cada.</h2>
-    <p class="lede">O braço HTLC reaproveita a implementação de referência do Hyperledger Cacti/Weaver. O braço 2PC é nosso, com o vocabulário do padrão IETF SATP: não existe 2PC cross-chain público para o Fabric.</p>
+    <p class="lede">O braço HTLC reaproveita a implementação de referência do <a class="cite" href="#ref-cacti">Hyperledger Cacti/Weaver</a>. O braço 2PC é nosso, com o vocabulário do padrão <a class="cite" href="#ref-satp">IETF SATP</a>: não existe 2PC cross-chain público para o Fabric.</p>
   </div>
 
   <div class="stack-lg">
@@ -527,7 +529,7 @@
       <div class="card">
         <span class="eyebrow">Como derrubamos</span>
         <h4>Quatro tipos de falha</h4>
-        <p>Queda de participante num passo escolhido. Queda do coordenador entre as fases. Atraso de rede de 800 ms (<code>tc/netem</code>). Relógio desregulado.</p>
+        <p>Queda de participante num passo escolhido. Queda do coordenador entre as fases. Atraso de rede de 800 ms (<code>tc/netem</code>). Relógio desregulado. Injeção controlada, como em <a class="cite" href="#ref-hajdu-2020">Hajdu et al. (2020)</a>.</p>
       </div>
       <div class="card">
         <span class="eyebrow">Como lemos</span>
@@ -562,7 +564,7 @@
 <!-- ============================================================ CAP 10 -->
 <section class="chapter" id="c10" aria-labelledby="h-c10">
   <div class="chapter-head reveal">
-    <div class="eyebrow"><span class="n">Capítulo 10</span> Resultados</div>
+    <div class="eyebrow"><span class="n">Capítulo 10</span> Resultados <span class="src src-ours">medido por nós</span></div>
     <h2 id="h-c10">Os dois protocolos quebram do mesmo jeito.</h2>
     <p class="lede">Esperávamos que o HTLC violasse e o 2PC apenas bloqueasse. A primeira metade se confirmou. A segunda, não.</p>
   </div>
@@ -592,7 +594,7 @@
     <div class="cols cols-text-fig">
       <div class="prose reveal">
         <h3>2. Onde cada um quebra</h3>
-        <p><strong>H2</strong>: o HTLC viola quando o segredo já é público e a contraparte não resgata a tempo. <strong>T2</strong>: o 2PC bloqueia quando o coordenador morre entre as fases; em <strong>T2r</strong>, o diário durável recupera. <strong>T4</strong>: o 2PC <em>viola</em> quando o prazo dispara em um participante só.</p>
+        <p><strong>H2</strong>: o HTLC viola quando o segredo já é público e a contraparte não resgata a tempo — exatamente a crítica de <a class="cite" href="#ref-zakhary-2020">Zakhary et al. (2020)</a>, reproduzida em laboratório. <strong>T2</strong>: o 2PC bloqueia quando o coordenador morre entre as fases, o bloqueio previsto por <a class="cite" href="#ref-skeen-1981">Skeen (1981)</a>; em <strong>T2r</strong>, o diário durável recupera. <strong>T4</strong>: o 2PC <em>viola</em> quando o prazo dispara em um participante só — este achado é nosso.</p>
         <div class="callout bad">
           <span class="eyebrow">O achado central</span>
           T4 não é defeito de implementação: é o que a válvula de escape custa. <strong>Sem</strong> prazo, o 2PC nunca viola, mas bloqueia para sempre. <strong>Com</strong> prazo, herda a dependência do tempo pela qual o HTLC é criticado.
@@ -645,7 +647,7 @@
 <!-- ============================================================ CAP 11 -->
 <section class="chapter" id="c11" aria-labelledby="h-c11">
   <div class="chapter-head reveal">
-    <div class="eyebrow"><span class="n">Capítulo 11</span> Conclusão</div>
+    <div class="eyebrow"><span class="n">Capítulo 11</span> Conclusão <span class="src src-ours">conclusão nossa</span></div>
     <h2 id="h-c11">A escolha não é segurança contra vivacidade. É qual custo de vivacidade você aceita.</h2>
   </div>
 
@@ -680,7 +682,7 @@
       </div>
       <div class="prose reveal">
         <h3>Para onde isso vai</h3>
-        <p>Um coordenador <strong>replicado</strong> (Paxos Commit) como terceiro braço; concorrência; e o efeito do tempo de corte de bloco.</p>
+        <p>Um coordenador <strong>replicado</strong> — o Paxos Commit de <a class="cite" href="#ref-gray-lamport-2006">Gray &amp; Lamport (2006)</a> — como terceiro braço; concorrência; e o efeito do tempo de corte de bloco.</p>
         <p>Código, cenários e dados estão no repositório. Um comando sobe as duas redes e roda a matriz.</p>
         <p><a href="https://github.com/diogenesdie/fabric-atomic-swap-study">github.com/diogenesdie/fabric-atomic-swap-study</a></p>
       </div>
@@ -695,6 +697,7 @@
   <div class="chapter-head reveal">
     <div class="eyebrow"><span class="n">Capítulo 12</span> Referências e glossário</div>
     <h2 id="h-c12">De onde vêm as ideias.</h2>
+    <p class="lede">Cada citação nos capítulos liga para a entrada correspondente aqui.</p>
   </div>
 
   <div class="stack-lg">
@@ -703,22 +706,22 @@
         <div>
           <h4>Commit atômico e 2PC</h4>
           <ul>
-            <li><b>GRAY, J.</b> Notes on Data Base Operating Systems. In: <em>Operating Systems: An Advanced Course</em>. Springer, 1978.</li>
-            <li><b>SKEEN, D.</b> Nonblocking Commit Protocols. In: ACM SIGMOD, 1981.</li>
-            <li><b>BERNSTEIN, P.; HADZILACOS, V.; GOODMAN, N.</b> Concurrency Control and Recovery in Database Systems. Addison-Wesley, 1987, cap. 7.</li>
-            <li><b>GRAY, J.; LAMPORT, L.</b> Consensus on Transaction Commit. ACM Transactions on Database Systems, v. 31, n. 1, 2006.</li>
-            <li><b>ZAKHARY, V.; AGRAWAL, D.; EL ABBADI, A.</b> Atomic Commitment Across Blockchains. Proc. VLDB Endowment, v. 13, n. 9, p. 1319–1331, 2020. A referência principal.</li>
-            <li><b>LU, H.; JAJOO, A.; NAMJOSHI, K. S.</b> A Two-Phase Protocol for Atomic Multi-Chain Transactions. In: ACM DIN, 2024, p. 21–27.</li>
+            <li id="ref-gray-1978"><b>GRAY, J.</b> Notes on Data Base Operating Systems. In: <em>Operating Systems: An Advanced Course</em>. Springer, 1978.</li>
+            <li id="ref-skeen-1981"><b>SKEEN, D.</b> Nonblocking Commit Protocols. In: ACM SIGMOD, 1981.</li>
+            <li id="ref-bernstein-1987"><b>BERNSTEIN, P.; HADZILACOS, V.; GOODMAN, N.</b> Concurrency Control and Recovery in Database Systems. Addison-Wesley, 1987, cap. 7.</li>
+            <li id="ref-gray-lamport-2006"><b>GRAY, J.; LAMPORT, L.</b> Consensus on Transaction Commit. ACM Transactions on Database Systems, v. 31, n. 1, 2006.</li>
+            <li id="ref-zakhary-2020"><b>ZAKHARY, V.; AGRAWAL, D.; EL ABBADI, A.</b> Atomic Commitment Across Blockchains. Proc. VLDB Endowment, v. 13, n. 9, p. 1319–1331, 2020. A referência principal.</li>
+            <li id="ref-lu-2024"><b>LU, H.; JAJOO, A.; NAMJOSHI, K. S.</b> A Two-Phase Protocol for Atomic Multi-Chain Transactions. In: ACM DIN, 2024, p. 21–27.</li>
           </ul>
         </div>
         <div>
           <h4>HTLC</h4>
           <ul>
-            <li><b>NOLAN, T.</b> Alt chains and atomic transfers. Fórum Bitcointalk, 2013.</li>
-            <li><b>HERLIHY, M.</b> Atomic Cross-Chain Swaps. In: ACM PODC, 2018. arXiv:1801.09515.</li>
-            <li><b>HERLIHY, M.; LISKOV, B.; SHRIRA, L.</b> Cross-chain deals and adversarial commerce. The VLDB Journal, v. 31, n. 6, p. 1291–1309, 2022.</li>
-            <li><b>XUE, Y.; HERLIHY, M.</b> Hedging Against Sore Loser Attacks in Cross-Chain Transactions. In: ACM PODC, 2021.</li>
-            <li><b>TSABARY, I. et al.</b> MAD-HTLC: Because HTLC is Crazy-Cheap to Attack. In: IEEE Symposium on Security and Privacy, 2021.</li>
+            <li id="ref-nolan-2013"><b>NOLAN, T.</b> Alt chains and atomic transfers. Fórum Bitcointalk, 2013.</li>
+            <li id="ref-herlihy-2018"><b>HERLIHY, M.</b> Atomic Cross-Chain Swaps. In: ACM PODC, 2018. arXiv:1801.09515.</li>
+            <li id="ref-herlihy-2022"><b>HERLIHY, M.; LISKOV, B.; SHRIRA, L.</b> Cross-chain deals and adversarial commerce. The VLDB Journal, v. 31, n. 6, p. 1291–1309, 2022.</li>
+            <li id="ref-xue-2021"><b>XUE, Y.; HERLIHY, M.</b> Hedging Against Sore Loser Attacks in Cross-Chain Transactions. In: ACM PODC, 2021.</li>
+            <li id="ref-tsabary-2021"><b>TSABARY, I. et al.</b> MAD-HTLC: Because HTLC is Crazy-Cheap to Attack. In: IEEE Symposium on Security and Privacy, 2021.</li>
           </ul>
         </div>
       </div>
@@ -726,25 +729,25 @@
         <div>
           <h4>Comparação e posicionamento</h4>
           <ul>
-            <li><b>ENGEL, D.; HERLIHY, M.; XUE, Y.</b> Failure is (literally) an Option: Atomic Commitment vs Optionality in Decentralized Finance. In: SSS, 2021.</li>
-            <li><b>ZAMYATIN, A. et al.</b> SoK: Communication Across Distributed Ledgers. In: Financial Cryptography and Data Security, 2021.</li>
-            <li><b>TAO, Y.; LI, B.; LI, B.</b> On Atomicity and Confidentiality Across Blockchains Under Failures. IEEE Transactions on Knowledge and Data Engineering, v. 36, n. 2, 2024.</li>
+            <li id="ref-engel-2021"><b>ENGEL, D.; HERLIHY, M.; XUE, Y.</b> Failure is (literally) an Option: Atomic Commitment vs Optionality in Decentralized Finance. In: SSS, 2021.</li>
+            <li id="ref-zamyatin-2021"><b>ZAMYATIN, A. et al.</b> SoK: Communication Across Distributed Ledgers. In: Financial Cryptography and Data Security, 2021.</li>
+            <li id="ref-tao-2024"><b>TAO, Y.; LI, B.; LI, B.</b> On Atomicity and Confidentiality Across Blockchains Under Failures. IEEE Transactions on Knowledge and Data Engineering, v. 36, n. 2, 2024.</li>
           </ul>
         </div>
         <div>
           <h4>Padrão e implementação</h4>
           <ul>
-            <li><b>IETF.</b> Secure Asset Transfer Protocol (SATP) Core. Internet-Draft draft-ietf-satp-core-16, 2026.</li>
-            <li><b>HYPERLEDGER CACTI</b> (incorporando Weaver). github.com/hyperledger-cacti/cacti</li>
+            <li id="ref-satp"><b>IETF.</b> Secure Asset Transfer Protocol (SATP) Core. Internet-Draft draft-ietf-satp-core-16, 2026.</li>
+            <li id="ref-cacti"><b>HYPERLEDGER CACTI</b> (incorporando Weaver). github.com/hyperledger-cacti/cacti</li>
           </ul>
         </div>
         <div>
           <h4>Plataforma e metodologia</h4>
           <ul>
-            <li><b>ANDROULAKI, E. et al.</b> Hyperledger Fabric: A Distributed Operating System for Permissioned Blockchains. In: EuroSys, 2018.</li>
-            <li><b>THAKKAR, P.; NATHAN, S.; VISWANATHAN, B.</b> Performance Benchmarking and Optimizing Hyperledger Fabric Blockchain Platform. In: IEEE MASCOTS, 2018.</li>
-            <li><b>HAJDU, Á. et al.</b> Using Fault Injection to Assess Blockchain Systems in Presence of Faulty Smart Contracts. IEEE Access, v. 8, 2020.</li>
-            <li><b>HYPERLEDGER FABRIC.</b> Documentação oficial, v2.5. hyperledger-fabric.readthedocs.io</li>
+            <li id="ref-androulaki-2018"><b>ANDROULAKI, E. et al.</b> Hyperledger Fabric: A Distributed Operating System for Permissioned Blockchains. In: EuroSys, 2018.</li>
+            <li id="ref-thakkar-2018"><b>THAKKAR, P.; NATHAN, S.; VISWANATHAN, B.</b> Performance Benchmarking and Optimizing Hyperledger Fabric Blockchain Platform. In: IEEE MASCOTS, 2018.</li>
+            <li id="ref-hajdu-2020"><b>HAJDU, Á. et al.</b> Using Fault Injection to Assess Blockchain Systems in Presence of Faulty Smart Contracts. IEEE Access, v. 8, 2020.</li>
+            <li id="ref-fabric-docs"><b>HYPERLEDGER FABRIC.</b> Documentação oficial, v2.5. hyperledger-fabric.readthedocs.io</li>
           </ul>
         </div>
       </div>
